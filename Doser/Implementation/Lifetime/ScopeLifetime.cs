@@ -1,4 +1,4 @@
-﻿namespace IQbx.Doser.Implementation.Lifetime
+﻿namespace Doser.Implementation.Lifetime
 {
     using System;
     

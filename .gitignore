@@ -10,3 +10,4 @@
 /DoserTests/bin
 /DoserTests/obj
 *.csproj.vspscc
+*.user

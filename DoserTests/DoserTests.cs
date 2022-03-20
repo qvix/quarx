@@ -3,9 +3,9 @@ namespace DoserTests
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using Doser;
+    using Doser.Exceptions;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using IQbx.Doser;
-    using IQbx.Doser.Exceptions;
 
     [TestClass]
     public class DoserTests
@@ -13,7 +13,7 @@ namespace DoserTests
         [TestMethod]
         public void SingletonInjectedTypeShouldResolve()
         {
-            var doser = new Doser();
+            var doser = new DoserProvider();
 
             doser.AddSingleton<ITest, Test>();
 
@@ -29,7 +29,7 @@ namespace DoserTests
         [TestMethod]
         public void TransientInjectedTypeShouldResolve()
         {
-            var doser = new Doser();
+            var doser = new DoserProvider();
 
             doser.AddTransient<ITest, Test>();
 
@@ -45,7 +45,7 @@ namespace DoserTests
         [TestMethod]
         public void ComplexInjectedTypeShouldResolve()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
 
             container
                 .AddSingleton<ITest, Test>()
@@ -58,7 +58,7 @@ namespace DoserTests
         [TestMethod]
         public void ComplexInjectedTypeWithKeyShouldResolve()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
 
             container
                 .AddSingleton<ITest, Test>("two")
@@ -74,7 +74,7 @@ namespace DoserTests
         [ExpectedException(typeof(ResolveException))]
         public void ResolveShouldFailOnInterfaceCreation()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
             container.GetService<IInjected>();
         }
         
@@ -82,7 +82,7 @@ namespace DoserTests
         [ExpectedException(typeof(ResolveException))]
         public void ResolveShouldFailOnCreateObjectWithInvalidKey()
         {
-            var container = new Doser()
+            var container = new DoserProvider()
                 .AddSingleton<ITest, Test>();
 
             container.GetService<Injected2>();
@@ -92,21 +92,21 @@ namespace DoserTests
         [ExpectedException(typeof(ResolveException))]
         public void ResolveShouldFailOnAbstractClassCreation()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
             container.GetService<Base>();
         }
 
         [TestMethod]
         public void ResolveShouldResolveClass()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
             container.GetService<Test>();
         }
         
         [TestMethod]
         public void ContainerShouldResolveRegisteredInstances()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
 
             container.AddSingleton(new Test());
 
@@ -116,7 +116,7 @@ namespace DoserTests
         [TestMethod]
         public void ContainerShouldResolveRegisteredTypedInstances()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
 
             container.AddSingleton<ITest>(new Test());
 
@@ -126,7 +126,7 @@ namespace DoserTests
         [TestMethod]
         public void ContainerShouldResolveCustomCreatedInstance()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
 
             container.AddSingleton<ITest>(() => new Test());
 
@@ -137,7 +137,7 @@ namespace DoserTests
         [TestMethod]
         public void ContainerShouldResolveEnumerable()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
 
             container
                 .AddSingleton<ITest, Test>()
@@ -169,7 +169,7 @@ namespace DoserTests
         [TestMethod]
         public void ContainerShouldResolveFunc()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
 
             container
                 .AddSingleton<ITest, Test>()
@@ -183,7 +183,7 @@ namespace DoserTests
         [TestMethod]
         public void ContainerShouldResolveLazy()
         {
-            var container = new Doser();
+            var container = new DoserProvider();
 
             container
                 .AddSingleton<ITest, Test>()

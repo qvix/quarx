@@ -1,15 +1,15 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace IQbx.DoserBenchmark;
+namespace DoserBenchmark;
 
 using BenchmarkDotNet.Attributes;
-using IQbx.Doser;
-using IQbx.DoserBenchmark.Entities;
+using Doser;
+using DoserBenchmark.Entities;
 using System;
 
 public class ActivatorBenchmark
 {
-    private Doser doser;
+    private DoserProvider doserProvider;
     private IServiceProvider serviceProvider;
     private object[] factoryArguments;
     private DependencyA dependencyA;
@@ -19,11 +19,11 @@ public class ActivatorBenchmark
     [GlobalSetup]
     public void SetUp()
     {
-        this.doser = new Doser();
-        this.doser.AddTransient<TypeToBeActivated>();
-        this.doser.AddSingleton<DependencyA>();
-        this.doser.AddSingleton<DependencyB>();
-        this.doser.AddSingleton<DependencyC>();
+        this.doserProvider = new DoserProvider();
+        this.doserProvider.AddTransient<TypeToBeActivated>();
+        this.doserProvider.AddSingleton<DependencyA>();
+        this.doserProvider.AddSingleton<DependencyB>();
+        this.doserProvider.AddSingleton<DependencyC>();
 
         var collection = new ServiceCollection();
         collection.AddTransient<TypeToBeActivated>();
@@ -42,13 +42,13 @@ public class ActivatorBenchmark
     [Benchmark]
     public void DoserGetService()
     {
-        this.doser.GetService<TypeToBeActivated>();
+        this.doserProvider.GetService<TypeToBeActivated>();
     }
 
     [Benchmark]
     public void ServiceProviderGetService()
     {
-        this.serviceProvider.GetService<TypeToBeActivated>();
+        ServiceProviderServiceExtensions.GetService<TypeToBeActivated>(this.serviceProvider);
     }
 
     [Benchmark]

@@ -1,4 +1,4 @@
-﻿namespace IQbx.Doser
+﻿namespace Doser
 {
     using System;
 

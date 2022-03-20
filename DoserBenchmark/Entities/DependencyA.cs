@@ -1,3 +1,3 @@
-namespace IQbx.DoserBenchmark;
+namespace DoserBenchmark;
 
 public class DependencyA {}

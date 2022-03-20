@@ -1,4 +1,4 @@
-﻿namespace IQbx.Doser.Exceptions
+﻿namespace Doser.Exceptions
 {
     using System;
 

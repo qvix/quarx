@@ -1,4 +1,4 @@
-﻿namespace IQbx.Doser.Implementation.Generic
+﻿namespace Doser.Implementation.Generic
 {
     using System;
     using System.Collections.Generic;

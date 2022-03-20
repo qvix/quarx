@@ -1,4 +1,4 @@
-﻿namespace IQbx.Doser.Implementation.Lifetime
+﻿namespace Doser.Implementation.Lifetime
 {
     using System;
 
@@ -6,12 +6,12 @@
     {
         public object Get(Guid key, Func<object> next)
         {
-            return ThreadScope.Get(key, next);
+            return Scope.Get(key, next);
         }
 
         public void Close()
         {
-            ThreadScope.Dispose();
+            Scope.Dispose();
         }
     }
 }

@@ -9,8 +9,8 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <AssemblyName>IQbx.Doser</AssemblyName>
-    <RootNamespace>IQbx.Doser</RootNamespace>
+    <AssemblyName>Doser</AssemblyName>
+    <RootNamespace>Doser</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

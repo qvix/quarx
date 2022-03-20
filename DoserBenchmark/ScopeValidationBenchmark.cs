@@ -1,9 +1,9 @@
-﻿namespace IQbx.DoserBenchmark
+﻿namespace DoserBenchmark
 {
     using System;
     using System.Runtime.CompilerServices;
     using BenchmarkDotNet.Attributes;
-    using IQbx.Doser;
+    using Doser;
 
     public class ScopeValidationBenchmark
     {
@@ -15,13 +15,13 @@
         [GlobalSetup]
         public void Setup()
         {
-            var services = new Doser();
+            var services = new DoserProvider();
             services.AddTransient<A>();
             services.AddTransient<B>();
             services.AddTransient<C>();
             _transientSp = services;
 
-            services = new Doser();
+            services = new DoserProvider();
             services.AddTransient<A>();
             services.AddTransient<B>();
             services.AddTransient<C>();
