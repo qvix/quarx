@@ -7,6 +7,7 @@ using Doser;
 using DoserBenchmark.Entities;
 using System;
 
+[MemoryDiagnoser]
 public class ActivatorBenchmark
 {
     private DoserProvider doserProvider;
