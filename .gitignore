@@ -11,3 +11,4 @@
 /DoserTests/obj
 *.csproj.vspscc
 *.user
+/DoserBenchmark/bin/Debug/net6.0

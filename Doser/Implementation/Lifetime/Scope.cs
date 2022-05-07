@@ -2,21 +2,37 @@
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Threading;
 
-    public static class Scope
+    internal class Scope : IScope, IDisposable
     {
-        private static AsyncLocal<ConcurrentDictionary<Guid, object>> instances =new AsyncLocal<ConcurrentDictionary<Guid, object>>();
-        private static ConcurrentDictionary<Guid, object> Instances => instances.Value ??= new ConcurrentDictionary<Guid, object>();
+        private readonly ConcurrentDictionary<Guid, object> instances = new ();
+        private readonly ThreadScopeService service;
 
-        public static object Get(Guid key, Func<object> factory)
+        public Scope(ThreadScopeService service, IScope parent)
         {
-            return Instances.GetOrAdd(key, factory);
+            this.service = service;
+            this.Parent = parent;
         }
 
-        public static void Dispose()
+        public IScope Parent { get; }
+
+        public object Get(Guid key, Func<object> factory)
         {
-            Instances.Clear();
-        }        
+            return this.instances.GetOrAdd(key, factory);
+        }
+
+        public void Dispose()
+        {
+            service.CloseScope(this);
+        }
+
+        public object GetTransparent(Guid key, Func<object> next)
+        {
+            if(Parent == null)
+            {
+                return this.Get(key, next);
+            }
+            return this.Get(key, () => this.Parent.Get(key, next));
+        }
     }
 }

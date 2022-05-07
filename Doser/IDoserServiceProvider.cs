@@ -2,7 +2,7 @@
 {
     using System;
 
-    internal interface IDoserServiceProvider : IServiceProvider
+    public interface IDoserServiceProvider : IServiceProvider
     {
         object? GetService(Type serviceType, object key);
     }

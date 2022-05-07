@@ -1,3 +1,6 @@
-namespace DoserBenchmark;
+namespace DoserBenchmark.Entities;
 
-public class DependencyB {}
+public class DependencyB : IData
+{
+    public int Value() => 5;
+}

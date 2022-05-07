@@ -13,9 +13,9 @@ namespace DoserTests
         [TestMethod]
         public void SingletonInjectedTypeShouldResolve()
         {
-            var doser = new DoserProvider();
-
-            doser.AddSingleton<ITest, Test>();
+            var doser = new DoserProvider()
+                .AddSingleton<ITest, Test>()
+                .Build();
 
             var first = doser.GetService<ITest>();
             Assert.IsNotNull(first);
@@ -29,9 +29,9 @@ namespace DoserTests
         [TestMethod]
         public void TransientInjectedTypeShouldResolve()
         {
-            var doser = new DoserProvider();
-
-            doser.AddTransient<ITest, Test>();
+            var doser = new DoserProvider()
+                .AddTransient<ITest, Test>()
+                .Build();
 
             var first = doser.GetService<ITest>();
             Assert.IsNotNull(first);
@@ -45,27 +45,25 @@ namespace DoserTests
         [TestMethod]
         public void ComplexInjectedTypeShouldResolve()
         {
-            var container = new DoserProvider();
-
-            container
+            var provider =  new DoserProvider()
                 .AddSingleton<ITest, Test>()
-                .AddSingleton<IInjected, Injected>();
+                .AddSingleton<IInjected, Injected>()
+                .Build();
 
-            Assert.IsNotNull(container.GetService<IInjected>().Value);
-            Assert.IsNotNull(container.GetService<IInjected>().Value);
+            Assert.IsNotNull(provider.GetService<IInjected>().Value);
+            Assert.IsNotNull(provider.GetService<IInjected>().Value);
         }
 
         [TestMethod]
         public void ComplexInjectedTypeWithKeyShouldResolve()
         {
-            var container = new DoserProvider();
-
-            container
+            var provider = new DoserProvider()
                 .AddSingleton<ITest, Test>("two")
                 .AddSingleton<ITest, Test2>("one")
-                .AddSingleton<IInjected, Injected2>();
+                .AddSingleton<IInjected, Injected2>()
+                .Build();
 
-            var result = container.GetService<IInjected>();
+            var result = provider.GetService<IInjected>();
             Assert.IsNotNull(result);
             Assert.AreEqual(2, result.Value);
         }
@@ -74,76 +72,77 @@ namespace DoserTests
         [ExpectedException(typeof(ResolveException))]
         public void ResolveShouldFailOnInterfaceCreation()
         {
-            var container = new DoserProvider();
-            container.GetService<IInjected>();
+            new DoserProvider()
+                .Build()
+                .GetService<IInjected>();
         }
         
         [TestMethod]
         [ExpectedException(typeof(ResolveException))]
         public void ResolveShouldFailOnCreateObjectWithInvalidKey()
         {
-            var container = new DoserProvider()
-                .AddSingleton<ITest, Test>();
+            var provider = new DoserProvider()
+                .AddSingleton<ITest, Test>()
+                .Build();
 
-            container.GetService<Injected2>();
+            provider.GetService<Injected2>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(ResolveException))]
         public void ResolveShouldFailOnAbstractClassCreation()
         {
-            var container = new DoserProvider();
-            container.GetService<Base>();
+            var provider = new DoserProvider().Build();
+            provider.GetService<Base>();
         }
 
         [TestMethod]
         public void ResolveShouldResolveClass()
         {
-            var container = new DoserProvider();
-            container.GetService<Test>();
+            var provider = new DoserProvider().Build();
+            provider.GetService<Test>();
         }
         
         [TestMethod]
-        public void ContainerShouldResolveRegisteredInstances()
+        public void ProviderShouldResolveRegisteredInstances()
         {
-            var container = new DoserProvider();
+            var provider = new DoserProvider()
+                .AddSingleton(new Test())
+                .Build();
 
-            container.AddSingleton(new Test());
-
-            Assert.IsNotNull(container.GetService<Test>());
+            Assert.IsNotNull(provider.GetService<Test>());
         }
 
         [TestMethod]
-        public void ContainerShouldResolveRegisteredTypedInstances()
+        public void ProviderShouldResolveRegisteredTypedInstances()
         {
-            var container = new DoserProvider();
+            var provider = new DoserProvider()
+                .AddSingleton<ITest>(new Test())
+                .Build();
 
-            container.AddSingleton<ITest>(new Test());
-
-            Assert.IsNotNull(container.GetService<ITest>());
+            Assert.IsNotNull(provider.GetService<ITest>());
         }
 
         [TestMethod]
-        public void ContainerShouldResolveCustomCreatedInstance()
+        public void ProviderShouldResolveCustomCreatedInstance()
         {
-            var container = new DoserProvider();
+            var provider = new DoserProvider()
+                .AddSingleton<ITest>(() => new Test())
+                .Build();
 
-            container.AddSingleton<ITest>(() => new Test());
-
-            var first = container.GetService<ITest>();
+            var first = provider.GetService<ITest>();
             Assert.IsNotNull(first);
         }
 
         [TestMethod]
-        public void ContainerShouldResolveEnumerable()
+        public void ProviderShouldResolveEnumerable()
         {
-            var container = new DoserProvider();
-
-            container
+            var provider = new DoserProvider()
                 .AddSingleton<ITest, Test>()
-                .AddSingleton<ITest, Test2>("duo");
+                .AddSingleton<ITest, Test2>("duo")
+                .Build();
 
-            var result = container.GetService<IEnumerable<ITest>>();
+            var result = provider.GetService<IEnumerable<ITest>>();
 
             Assert.IsNotNull(result);
             var list = result.ToList();
@@ -151,14 +150,14 @@ namespace DoserTests
             Assert.AreEqual(typeof(Test), list.First().GetType());
             Assert.AreEqual(typeof(Test2), list.Skip(1).First().GetType());
 
-            var resultArray = container.GetService<ITest[]>();
+            var resultArray = provider.GetService<ITest[]>();
 
             Assert.IsNotNull(resultArray);
             Assert.AreEqual(2, resultArray.Count());
             Assert.AreEqual(typeof(Test), resultArray.First().GetType());
             Assert.AreEqual(typeof(Test2), resultArray.Skip(1).First().GetType());
 
-            var resultList = container.GetService<IList<ITest>>();
+            var resultList = provider.GetService<IList<ITest>>();
 
             Assert.IsNotNull(resultList);
             Assert.AreEqual(2, resultList.Count());
@@ -167,31 +166,41 @@ namespace DoserTests
         }
 
         [TestMethod]
-        public void ContainerShouldResolveFunc()
+        public void ProviderContainerShouldResolveFunc()
         {
-            var container = new DoserProvider();
-
-            container
+            var provider = new DoserProvider()
                 .AddSingleton<ITest, Test>()
-                .AddSingleton<Test3>();
+                .AddSingleton<Test3>()
+                .Build();
 
-            var expected = container.GetService<ITest>();
-            var result = container.GetService<Test3>();
+            var expected = provider.GetService<ITest>();
+            var result = provider.GetService<Test3>();
             Assert.AreEqual(expected.Value, result.Value().Value);
         }
 
         [TestMethod]
-        public void ContainerShouldResolveLazy()
+        public void ProviderShouldResolveLazy()
         {
-            var container = new DoserProvider();
-
-            container
+            var provider = new DoserProvider()
                 .AddSingleton<ITest, Test>()
-                .AddSingleton<Test4>();
+                .AddSingleton<Test4>()
+                .Build();
 
-            var expected = container.GetService<ITest>();
-            var result = container.GetService<Test4>();
+            var expected = provider.GetService<ITest>();
+            var result = provider.GetService<Test4>();
             Assert.AreEqual(expected.Value, result.Value.Value.Value);
+        }
+
+        [TestMethod]
+        public void ProviderShouldResolveArray()
+        {
+            var provider = new DoserProvider()
+                .AddSingleton<ITest, Test>()
+                .AddSingleton<ITest, Test2>()
+                .Build();
+
+            var result = provider.GetService<Injected3>();
+            Assert.AreEqual(2, result.Values.Length);
         }
 
         #region test classes
@@ -222,7 +231,7 @@ namespace DoserTests
 
         private class Test2 : ITest
         {
-            public int Value { get { return 2; } }
+            public int Value => 2;
         }
 
         private class Test3
@@ -267,6 +276,16 @@ namespace DoserTests
             }
 
             public int Value => this.test.Value;
+        }
+
+        private class Injected3
+        {
+            public Injected3(ITest[] values)
+            {
+                this.Values = values;
+            }
+
+            public ITest[] Values { get; }
         }
 
         #endregion

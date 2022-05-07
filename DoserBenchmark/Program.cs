@@ -1,14 +1,23 @@
-﻿namespace DoserBenchmark
-{
-    using BenchmarkDotNet.Running;
-    using IQbx.DoserBenchmark;
+﻿namespace DoserBenchmark;
 
-    internal class Program
+using BenchmarkDotNet.Running;
+
+internal class Program
+{
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            BenchmarkRunner.Run(typeof(ActivatorBenchmark));
-            //BenchmarkRunner.Run(typeof(ScopeValidationBenchmark));
-        }
+
+        //Test();
+        BenchmarkRunner.Run(typeof(ActivatorBenchmark));
+        //BenchmarkRunner.Run(typeof(ScopeValidationBenchmark));
+    }
+
+    static void Test()
+    {
+        var benchmark = new ActivatorBenchmark();
+
+        benchmark.SetUp();
+        benchmark.DoserGetService();
     }
 }
+

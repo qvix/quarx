@@ -4,7 +4,6 @@
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
-    using System.Threading;
 
     internal class ObjectBuilder : IObjectResolver
     {
@@ -24,7 +23,7 @@
 
         public Func<object> Resolve(Func<object> next)
         {
-            return LazyInitializer.EnsureInitialized(ref this.creationFunction, this.GetCreationFunction);
+            return this.creationFunction ??= this.GetCreationFunction();
         }
 
         private Func<object> GetCreationFunction()
@@ -45,7 +44,7 @@
                 {
                     var parameterType = item.ParameterType;
 
-                    var typeResolver = this.resolvers[parameterType];
+                    var typeResolver = this.resolvers.GetResolver(parameterType);
                     var resolver = Attribute.GetCustomAttribute(item, typeof(DependencyAttribute)) is not DependencyAttribute dependencyAttribute 
                         ? typeResolver.GetResolver() 
                         : typeResolver.GetResolver(dependencyAttribute.Key);

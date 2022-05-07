@@ -1,3 +1,3 @@
-namespace DoserBenchmark;
+namespace DoserBenchmark.Entities;
 
 public class DependencyC {}

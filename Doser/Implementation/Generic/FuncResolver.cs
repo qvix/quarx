@@ -45,7 +45,7 @@
 
             var enumerableCastFunc = CreateLambda(type, innerType, getResolver(targetResolver));
 
-            return new ObjectResolver(new IObjectResolver[] { new InstanceFactory(enumerableCastFunc) });
+            return new ObjectResolver(new InstanceFactory(enumerableCastFunc));
         }
 
         private static Func<object> CreateLambda(Type type, Type innerType, ObjectResolver resolver)

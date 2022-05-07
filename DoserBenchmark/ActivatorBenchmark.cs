@@ -2,42 +2,51 @@
 
 namespace DoserBenchmark;
 
+using System.Collections.Generic;
+
 using BenchmarkDotNet.Attributes;
 using Doser;
-using DoserBenchmark.Entities;
+using Entities;
 using System;
 
 [MemoryDiagnoser]
 public class ActivatorBenchmark
 {
-    private DoserProvider doserProvider;
+    private IDoserServiceProvider doserProvider;
     private IServiceProvider serviceProvider;
     private object[] factoryArguments;
     private DependencyA dependencyA;
     private DependencyB dependencyB;
     private DependencyC dependencyC;
+    private IEnumerable<IData> data;
 
     [GlobalSetup]
     public void SetUp()
     {
-        this.doserProvider = new DoserProvider();
-        this.doserProvider.AddTransient<TypeToBeActivated>();
-        this.doserProvider.AddSingleton<DependencyA>();
-        this.doserProvider.AddSingleton<DependencyB>();
-        this.doserProvider.AddSingleton<DependencyC>();
+        this.doserProvider = new DoserProvider()
+            .AddTransient<TypeToBeActivated>()
+            .AddSingleton<DependencyA>()
+            .AddSingleton<DependencyB>()
+            .AddSingleton<IData, DependencyA>()
+            .AddSingleton<IData, DependencyB>()
+            .AddSingleton<DependencyC>()
+            .Build();
 
-        var collection = new ServiceCollection();
-        collection.AddTransient<TypeToBeActivated>();
-        collection.AddSingleton<DependencyA>();
-        collection.AddSingleton<DependencyB>();
-        collection.AddSingleton<DependencyC>();
-        this.serviceProvider = collection.BuildServiceProvider();
+        this.serviceProvider = new ServiceCollection()
+            .AddTransient<TypeToBeActivated>()
+            .AddSingleton<DependencyA>()
+            .AddSingleton<DependencyB>()
+            .AddSingleton<IData, DependencyA>()
+            .AddSingleton<IData, DependencyB>()
+            .AddSingleton<DependencyC>()
+            .BuildServiceProvider();
 
         this.dependencyA = new DependencyA();
         this.dependencyB = new DependencyB();
-        this.dependencyC = new DependencyC();   
+        this.dependencyC = new DependencyC();
+        this.data = new IData[] { dependencyA, dependencyB };
 
-        factoryArguments = new object[] { this.dependencyA, this.dependencyB, this.dependencyC };
+        this.factoryArguments = new object[] { this.dependencyA, this.dependencyB, this.dependencyC, this.data };
     }
 
     [Benchmark]
@@ -61,13 +70,13 @@ public class ActivatorBenchmark
     [Benchmark]
     public void CreateInstance()
     {
-        new TypeToBeActivated(new DependencyA(), new DependencyB(), new DependencyC());
+        new TypeToBeActivated(new DependencyA(), new DependencyB(), new DependencyC(), this.data);
     }
 
     [Benchmark]
     public void CreateInstanceStatic()
     {
-        new TypeToBeActivated(this.dependencyA,this.dependencyB, this.dependencyC);
+        new TypeToBeActivated(this.dependencyA, this.dependencyB, this.dependencyC, this.data);
     }
 }
 

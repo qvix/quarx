@@ -19,13 +19,13 @@
             services.AddTransient<A>();
             services.AddTransient<B>();
             services.AddTransient<C>();
-            _transientSp = services;
+            _transientSp = services.Build();
 
             services = new DoserProvider();
             services.AddTransient<A>();
             services.AddTransient<B>();
             services.AddTransient<C>();
-            _transientSpScopeValidation = services;
+            _transientSpScopeValidation = services.Build();
         }
 
         [Benchmark(Baseline = true, OperationsPerInvoke = OperationsPerInvoke)]

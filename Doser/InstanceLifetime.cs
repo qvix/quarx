@@ -4,6 +4,7 @@
     {
         Global,
         Scoped,
+        ScopeTransparent,
         Local
     }
 }

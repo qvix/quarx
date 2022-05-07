@@ -1,22 +1,40 @@
 ﻿namespace Doser.Implementation
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
 
     internal class ObjectResolver  
     {
-        private static readonly Func<object> DefaultResult = new(() => default);
-        private readonly IObjectResolver[] resolvers;
+        private static readonly Func<object> DefaultResult = () => default;
+        private readonly Func<object> getFunction;
 
-        public ObjectResolver(IEnumerable<IObjectResolver> resolvers)
+        public ObjectResolver(params IObjectResolver[] resolvers)
         {
-            this.resolvers = resolvers.Reverse().ToArray();
+            this.getFunction =
+                resolvers.Length switch
+                {
+                    0 => DefaultResult,
+                    1 => () => resolvers[0].Resolve(DefaultResult)(),
+                    2 => () => resolvers[0].Resolve(resolvers[1].Resolve(DefaultResult))(),
+                    _ => BuildGet(resolvers)
+            };
         }
 
-        public object Get()
+        public object Get() => getFunction();
+
+        private Func<object> BuildGet(params IObjectResolver[] resolvers)
         {
-            return resolvers.Aggregate(DefaultResult, (current, resolver) => resolver.Resolve(current))();
+            var reversed = resolvers.Reverse().ToArray();
+            return () =>
+            {
+                var result = DefaultResult;
+                for (var i = 0; i < reversed.Length; i++)
+                {
+                    result = reversed[i].Resolve(result);
+                }
+
+                return result();
+            };
         }
     }
 }

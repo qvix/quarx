@@ -1,17 +1,21 @@
-﻿namespace Doser.Implementation.Lifetime
-{
-    using System;
+﻿using System.Threading;
 
+namespace Doser.Implementation.Lifetime
+{
     public class ThreadScopeService : IScopeService
     {
-        public object Get(Guid key, Func<object> next)
+        private readonly AsyncLocal<IScope> current = new ();
+
+        public IScope Current { get => current.Value; private set => current.Value = value; }
+
+        public IScope CreateScope()
         {
-            return Scope.Get(key, next);
+            return this.Current = new Scope(this, this.Current);
         }
 
-        public void Close()
+        internal void CloseScope(Scope scope)
         {
-            Scope.Dispose();
+            this.Current = scope.Parent;
         }
     }
 }

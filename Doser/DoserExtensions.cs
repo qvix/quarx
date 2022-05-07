@@ -9,7 +9,7 @@
             return (T)serviceProvider.GetService(typeof(T));
         }
 
-        public static T GetService<T>(this DoserProvider serviceProvider, object key)
+        public static T GetService<T>(this IDoserServiceProvider serviceProvider, object key)
         {
             return (T)serviceProvider.GetService(typeof(T), key);
         }
