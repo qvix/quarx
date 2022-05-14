@@ -13,6 +13,7 @@
 
         private IDictionary<object, ObjectResolver> keyResolvers;
         private readonly ResolverRepository typeResolvers;
+        private ObjectResolver defaultResolver;
 
         public TypeResolver(Type type, ResolverRepository typeResolvers)
         {
@@ -37,9 +38,9 @@
 
         public IEnumerable<ObjectResolver> GetResolvers()
         {
-            foreach (var policy in this.registered)
+            foreach (var resolver in this.registered)
             {
-                yield return policy;
+                yield return resolver;
             }
 
             if (this.keyResolvers == null)
@@ -47,18 +48,48 @@
                 yield break;
             }
 
-            foreach (var policy in this.keyResolvers)
+            foreach (var resolver in this.keyResolvers)
             {
-                yield return policy.Value;
+                yield return resolver.Value;
             }
         }
 
         public void Build()
         {
+            foreach (var resolver in this.GetResolvers())
+            {
+                resolver.Build();
+            }
 
+            this.defaultResolver = this.CreateResolver();
         }
 
         public ObjectResolver GetResolver()
+        {
+            return defaultResolver ??= this.CreateResolver();
+        }
+
+        public ObjectResolver GetResolver(object key)
+        {
+            key.CheckNotNull();
+            if (this.keyResolvers == null)
+            {
+                return null;
+            }
+
+            if (!this.keyResolvers.TryGetValue(key, out var resolver))
+            {
+                resolver = FuncResolver.TryCreateFuncResolver(this.type, this.typeResolvers, key)
+                           ?? LazyResolver.TryCreateLazyResolver(this.type, this.typeResolvers, key);
+
+                this.keyResolvers[key] = resolver;
+            }
+
+            return resolver;
+
+        }
+
+        private ObjectResolver CreateResolver()
         {
             return this.registered.Count > 0
                 ? this.registered[0]
@@ -67,19 +98,6 @@
                   ?? LazyResolver.TryCreateLazyResolver(this.type, this.typeResolvers)
                   ?? this.TryCreateTypeResolver()
                   ?? throw new ResolveException(this.type);
-        }
-
-        public ObjectResolver GetResolver(object key)
-        {
-            key.CheckNotNull();
-            if (this.keyResolvers == null)
-            {
-                throw new ResolveException(this.type);
-            }
-            return this.keyResolvers.TryGetValue(key, out var resolver) ? resolver :
-                 FuncResolver.TryCreateFuncResolver(this.type, this.typeResolvers, key)
-                 ?? LazyResolver.TryCreateLazyResolver(this.type, this.typeResolvers)
-                 ?? throw new ResolveException(this.type);
         }
 
         private ObjectResolver TryCreateTypeResolver()

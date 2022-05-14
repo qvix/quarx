@@ -41,7 +41,7 @@
 
         private static Func<object> CreateLambda(Type targetType, Type type, IEnumerable<ObjectResolver> resolvers)
         {
-            // new Func<object>(() => new IEnumerable{RealType}(resolvers.Get(innerType)));
+            // new Func<object>(() => new IEnumerable{RealType}(resolvers.Get()));
             var enumerableGenericType = typeof(IEnumerable<>);
             var enumerableTargetType = enumerableGenericType.MakeGenericType(type);
             var castMethod = CastMethod.MakeGenericMethod(type);

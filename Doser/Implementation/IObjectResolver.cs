@@ -5,5 +5,9 @@
     internal interface IObjectResolver
     {
         Func<object> Resolve(Func<object> next);
+
+        void Build()
+        {
+        }
     }
 }

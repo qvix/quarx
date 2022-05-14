@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Linq.Expressions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DoserBenchmark;
 
@@ -19,6 +20,7 @@ public class ActivatorBenchmark
     private DependencyB dependencyB;
     private DependencyC dependencyC;
     private IEnumerable<IData> data;
+    private Func<object> createFunction; 
 
     [GlobalSetup]
     public void SetUp()
@@ -47,12 +49,20 @@ public class ActivatorBenchmark
         this.data = new IData[] { dependencyA, dependencyB };
 
         this.factoryArguments = new object[] { this.dependencyA, this.dependencyB, this.dependencyC, this.data };
+
+        this.createFunction = this.GetCreationFunction();
     }
 
     [Benchmark]
-    public void DoserGetService()
+    public void  DoserGetService()
     {
         this.doserProvider.GetService<TypeToBeActivated>();
+    }
+
+    [Benchmark]
+    public void ExpressionCreate()
+    {
+        this.createFunction();
     }
 
     [Benchmark]
@@ -70,13 +80,26 @@ public class ActivatorBenchmark
     [Benchmark]
     public void CreateInstance()
     {
-        new TypeToBeActivated(new DependencyA(), new DependencyB(), new DependencyC(), this.data);
+        var dependencyA = new DependencyA();
+        var dependencyB = new DependencyB();
+        var dependencyC = new DependencyC();
+        var data = new IData[] { dependencyA, dependencyB };
+
+        new TypeToBeActivated(dependencyA, dependencyB, dependencyC, data);
     }
 
     [Benchmark]
     public void CreateInstanceStatic()
     {
         new TypeToBeActivated(this.dependencyA, this.dependencyB, this.dependencyC, this.data);
+    }
+
+
+    private Func<object> GetCreationFunction()
+    {
+        var constructor = typeof(DependencyA).GetConstructors()[0];
+        
+        return (Func<object>)Expression.Lambda(Expression.New(constructor)).Compile();
     }
 }
 

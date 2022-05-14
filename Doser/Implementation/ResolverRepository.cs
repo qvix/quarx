@@ -47,10 +47,14 @@
             return this;
         }
 
-
         private TypeResolver Ensure(Type type)
         {
-            return this.typeResolvers.GetOrAdd(type, type => new TypeResolver(type, this));
+            if (this.typeResolvers.TryGetValue(type, out var resolver))
+            {
+                return resolver;
+            }
+
+            return this.typeResolvers.GetOrAdd(type, _ => new TypeResolver(type, this));
         }
     }
 }

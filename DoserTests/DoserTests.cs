@@ -166,7 +166,7 @@ namespace DoserTests
         }
 
         [TestMethod]
-        public void ProviderContainerShouldResolveFunc()
+        public void ProviderShouldResolveFunc()
         {
             var provider = new DoserProvider()
                 .AddSingleton<ITest, Test>()

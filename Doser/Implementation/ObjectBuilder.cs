@@ -26,6 +26,11 @@
             return this.creationFunction ??= this.GetCreationFunction();
         }
 
+        public void Build()
+        {
+            this.creationFunction ??= this.GetCreationFunction();
+        }
+
         private Func<object> GetCreationFunction()
         {
             if (this.targetType.IsInterface)

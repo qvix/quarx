@@ -51,7 +51,6 @@
 
         private static Func<object> CreateLambda(Type type, Type innerType, ObjectResolver resolver)
         {
-            // new Func<IContainer, object>(container => () => new Func{RealType}(container.Resolve(innerType, key)));
             var callExpression = Expression.Convert(Expression.Call(Expression.Constant(resolver), ResolverGetMethod), innerType);
 
             var innerLambdaType = typeof(Func<>).MakeGenericType(innerType);
