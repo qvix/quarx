@@ -5,9 +5,11 @@
     using System.Linq.Expressions;
     using System.Reflection;
 
+    using Exceptions;
+
     internal class ObjectBuilder : IObjectResolver
     {
-        private static readonly MethodInfo GetObjectMethod = typeof(ObjectResolver).GetMethod(nameof(ObjectResolver.Get));
+        private static readonly MethodInfo GetObjectMethod = typeof(IObjectResolver).GetMethod(nameof(IObjectResolver.Get));
 
         private readonly Type targetType;
         private readonly ResolverRepository resolvers;
@@ -15,15 +17,15 @@
 
         public ObjectBuilder(Type targetType, ResolverRepository resolvers)
         {
-            targetType.CheckNotNull();
-
             this.targetType = targetType;
             this.resolvers = resolvers;
         }
 
-        public Func<object> Resolve(Func<object> next)
+        public InstanceLifetime Lifetime => InstanceLifetime.Local;
+
+        public object Get()
         {
-            return this.creationFunction ??= this.GetCreationFunction();
+            return (this.creationFunction ??= this.GetCreationFunction())();
         }
 
         public void Build()
@@ -50,9 +52,22 @@
                     var parameterType = item.ParameterType;
 
                     var typeResolver = this.resolvers.GetResolver(parameterType);
-                    var resolver = Attribute.GetCustomAttribute(item, typeof(DependencyAttribute)) is not DependencyAttribute dependencyAttribute 
+                    var dependencyAttribute = Attribute.GetCustomAttribute(item, typeof(DependencyAttribute)) as DependencyAttribute;
+                    var resolver = dependencyAttribute == null
                         ? typeResolver.GetResolver() 
                         : typeResolver.GetResolver(dependencyAttribute.Key);
+
+                    if (resolver == null)
+                    {
+                        if (dependencyAttribute == null)
+                        {
+                            throw new ResolveException(this.targetType);
+                        }
+                        throw new ResolveException(this.targetType, dependencyAttribute.Key);
+                    }
+
+                    resolver.Build();
+
                     var instance = Expression.Constant(resolver);
 
                     return Expression.Convert(Expression.Call(instance, GetObjectMethod), parameterType);

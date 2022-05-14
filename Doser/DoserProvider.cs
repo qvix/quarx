@@ -26,32 +26,32 @@
 
         public void Add(Type registeredType, Type implementationType, InstanceLifetime lifeTime)
         {
-            this.registrations.Add(registeredType, this.GetResolvers(new ObjectBuilder(implementationType, registrations), lifeTime));
+            this.registrations.Add(registeredType, this.GetResolver(new ObjectBuilder(implementationType, registrations), lifeTime));
         }
 
         public void Add(Type registeredType, Type implementationType, object key, InstanceLifetime lifeTime)
         {
-            this.registrations.Add(registeredType, key, this.GetResolvers(new ObjectBuilder(implementationType, registrations), lifeTime));
+            this.registrations.Add(registeredType, key, this.GetResolver(new ObjectBuilder(implementationType, registrations), lifeTime));
         }
 
         public void Add<TInterface, TImplementation>(Func<TImplementation> factory, InstanceLifetime lifeTime) where TImplementation : TInterface
         {
-            this.registrations.Add(typeof(TInterface), this.GetResolvers(new InstanceFactory(() => factory()), lifeTime));
+            this.registrations.Add(typeof(TInterface), this.GetResolver(new InstanceFactory(() => factory(), lifeTime), lifeTime));
         }
 
         public void Add<TInterface, TImplementation>(Func<TImplementation> factory, object key, InstanceLifetime lifeTime) where TImplementation : TInterface
         {
-            this.registrations.Add(typeof(TInterface), key, this.GetResolvers(new InstanceFactory(() => factory()), lifeTime));
+            this.registrations.Add(typeof(TInterface), key, this.GetResolver(new InstanceFactory(() => factory(), lifeTime), lifeTime));
         }
 
-        private IObjectResolver[] GetResolvers(IObjectResolver resolver, InstanceLifetime scope)
+        private IObjectResolver GetResolver(IObjectResolver resolver, InstanceLifetime scope)
         {
             return scope switch
             {
-                InstanceLifetime.Global => new [] { new SingletonLifetime(), resolver },
-                InstanceLifetime.Local => new [] { resolver },
-                InstanceLifetime.Scoped => new [] { new ScopeLifetime(this.scopeService), resolver },
-                InstanceLifetime.ScopeTransparent => new [] { new ScopeTransparentLifetime(this.scopeService), resolver },
+                InstanceLifetime.Global => new SingletonLifetime(resolver),
+                InstanceLifetime.Local => resolver,
+                InstanceLifetime.Scoped => new ScopeLifetime(this.scopeService, resolver),
+                InstanceLifetime.ScopeTransparent => new ScopeTransparentLifetime(this.scopeService, resolver),
                 _ => throw new Exception($"Unknown life time scope registeredType {scope}")
             };
         }

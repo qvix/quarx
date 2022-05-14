@@ -8,23 +8,22 @@
 
     internal static class LazyResolver
     {
-        private static Type InnerType => typeof(Lazy<>);
-        private static readonly MethodInfo ResolverGetMethod = typeof(ObjectResolver).GetMethod(nameof(ObjectResolver.Get));
+        private static readonly MethodInfo ResolverGetMethod = typeof(IObjectResolver).GetMethod(nameof(IObjectResolver.Get));
 
-        public static ObjectResolver TryCreateLazyResolver(Type type,
+        public static IObjectResolver TryCreateLazyResolver(Type type,
             ResolverRepository typeResolvers, object key)
         {
             return InternalTryCreateLazyResolver(type, typeResolvers, resolver => resolver.GetResolver(key));
         }
 
-        public static ObjectResolver TryCreateLazyResolver(Type type,
+        public static IObjectResolver TryCreateLazyResolver(Type type,
             ResolverRepository typeResolvers)
         {
             return InternalTryCreateLazyResolver(type, typeResolvers, resolver => resolver.GetResolver());
         }
 
-        private static ObjectResolver InternalTryCreateLazyResolver(Type type,
-            ResolverRepository typeResolvers, Func<TypeResolver, ObjectResolver> getResolver)
+        private static IObjectResolver InternalTryCreateLazyResolver(Type type,
+            ResolverRepository typeResolvers, Func<TypeResolver, IObjectResolver> getResolver)
         {
             if (!type.IsInheritedFrom(typeof(Lazy<>)))
             {
@@ -46,10 +45,10 @@
 
             var enumerableCastFunc = CreateLambda(type, innerType, getResolver(targetResolver));
 
-            return new ObjectResolver(new InstanceFactory(enumerableCastFunc));
+            return new InstanceFactory(enumerableCastFunc, InstanceLifetime.Local);
         }
 
-        private static Func<object> CreateLambda(Type type, Type innerType, ObjectResolver resolver)
+        private static Func<object> CreateLambda(Type type, Type innerType, IObjectResolver resolver)
         {
             var callExpression = Expression.Convert(Expression.Call(Expression.Constant(resolver), ResolverGetMethod), innerType);
 

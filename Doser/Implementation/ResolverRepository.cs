@@ -12,14 +12,14 @@
             return this.typeResolvers.TryGetValue(type, out result);
         }
 
-        public void Add(Type type, IObjectResolver[] resolvers)
+        public void Add(Type type, IObjectResolver resolver)
         {
-            this.Ensure(type).Add(resolvers);
+            this.Ensure(type).Add(resolver);
         }
 
-        public void Add(Type type, object key, IObjectResolver[] resolvers)
+        public void Add(Type type, object key, IObjectResolver resolver)
         {
-            this.Ensure(type).Add(key, resolvers);
+            this.Ensure(type).Add(key, resolver);
         }
 
         public object? GetService(Type serviceType, object key)

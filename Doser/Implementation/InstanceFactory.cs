@@ -6,14 +6,19 @@
     {
         private readonly Func<object> instanceFactory;
 
-        public InstanceFactory(Func<object> instanceFactory)
+        public InstanceFactory(Func<object> instanceFactory, InstanceLifetime lifetime)
         {
             this.instanceFactory = instanceFactory;
+            this.Lifetime = lifetime;
         }
 
-        public Func<object> Resolve(Func<object> next)
+        public InstanceLifetime Lifetime { get; } 
+
+        public object Get()
         {
-            return instanceFactory;
+            return instanceFactory();
         }
+
+        public void Build() { }
     }
 }

@@ -14,7 +14,7 @@
         private static readonly MethodInfo GetObjectsMethod = typeof(EnumerableResolver).GetMethod(nameof(GetObjects), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo CastMethod = typeof(Enumerable).GetMethod(nameof(Enumerable.Cast));
 
-        public static ObjectResolver TryCreateEnumerableResolver(Type type, ResolverRepository typeResolvers)
+        public static IObjectResolver TryCreateEnumerableResolver(Type type, ResolverRepository typeResolvers)
         {
             if (!type.IsInterfaceImplementor(typeof(IEnumerable<>)))
             {
@@ -34,28 +34,33 @@
                 throw new ResolveException(innerType);
             }
 
+            targetResolver.Build();
             var enumerableCastFunc = CreateLambda(type, innerType, targetResolver.GetResolvers());
 
-            return new ObjectResolver(new InstanceFactory(enumerableCastFunc));
+            return new InstanceFactory(enumerableCastFunc, InstanceLifetime.Local);
         }
 
-        private static Func<object> CreateLambda(Type targetType, Type type, IEnumerable<ObjectResolver> resolvers)
+        private static Func<object> CreateLambda(Type targetType, Type type, IObjectResolver[] resolvers)
         {
-            // new Func<object>(() => new IEnumerable{RealType}(resolvers.Get()));
             var enumerableGenericType = typeof(IEnumerable<>);
             var enumerableTargetType = enumerableGenericType.MakeGenericType(type);
             var castMethod = CastMethod.MakeGenericMethod(type);
+            var results = new object[resolvers.Length];
 
             var callExpression = Expression.Convert(
-                Expression.Call(castMethod, Expression.Call(GetObjectsMethod, Expression.Constant(resolvers))),
+                Expression.Call(castMethod, Expression.Call(GetObjectsMethod, Expression.Constant(resolvers), Expression.Constant(results))),
                 enumerableTargetType);
 
             return Expression.Lambda<Func<object>>(GetTargetObject(targetType, type, callExpression, enumerableTargetType)).Compile();
         }
 
-        private static IEnumerable<object> GetObjects(IEnumerable<ObjectResolver> resolvers)
+        private static IEnumerable<object> GetObjects(IObjectResolver[] resolvers, object[] results)
         {
-            return resolvers.Select((x => x.Get()));
+            for (int i = 0; i < resolvers.Length; i++)
+            {
+                results[i] = resolvers[i].Get();
+            }
+            return results;
         }
 
         private static Expression GetTargetObject(Type targetType, Type innerType, Expression enumerableSource, Type enumerableTargetType)

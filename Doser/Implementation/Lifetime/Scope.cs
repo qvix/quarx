@@ -28,7 +28,7 @@
 
         public object GetTransparent(Guid key, Func<object> next)
         {
-            if(Parent == null)
+            if(this.Parent == null)
             {
                 return this.Get(key, next);
             }
