@@ -16,9 +16,9 @@
 
         public InstanceLifetime Lifetime => InstanceLifetime.ScopeTransparent;
 
-        public object Get()
+        public Func<object> GetResolver()
         {
-            return this.scopeService.Current?.GetTransparent(key, () => this.objectResolver.Get());
+            return () => this.scopeService.Current?.GetTransparent(key, this.objectResolver.GetResolver());
         }
 
         public void Build()

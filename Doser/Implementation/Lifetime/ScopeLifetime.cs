@@ -16,9 +16,9 @@
 
         public InstanceLifetime Lifetime => InstanceLifetime.Scoped;
 
-        public object Get()
+        public Func<object> GetResolver()
         {
-            return this.scopeService.Current?.Get(key, () => this.objectResolver.Get());
+            return () => this.scopeService.Current?.Get(key, this.objectResolver.GetResolver());
         }
 
         public void Build()

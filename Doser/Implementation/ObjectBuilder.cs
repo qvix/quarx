@@ -9,8 +9,6 @@
 
     internal class ObjectBuilder : IObjectResolver
     {
-        private static readonly MethodInfo GetObjectMethod = typeof(IObjectResolver).GetMethod(nameof(IObjectResolver.Get));
-
         private readonly Type targetType;
         private readonly ResolverRepository resolvers;
         private Func<object> creationFunction;
@@ -23,9 +21,9 @@
 
         public InstanceLifetime Lifetime => InstanceLifetime.Local;
 
-        public object Get()
+        public Func<object> GetResolver()
         {
-            return (this.creationFunction ??= this.GetCreationFunction())();
+            return this.creationFunction ??= this.GetCreationFunction();
         }
 
         public void Build()
@@ -68,9 +66,7 @@
 
                     resolver.Build();
 
-                    var instance = Expression.Constant(resolver);
-
-                    return Expression.Convert(Expression.Call(instance, GetObjectMethod), parameterType);
+                    return resolver.CreateResolveExpression(parameterType);
                 });
 
             return (Func<object>)Expression.Lambda(Expression.New(constructor, parameters)).Compile();

@@ -1,4 +1,6 @@
-﻿namespace Doser.Implementation.Lifetime
+﻿using System;
+
+namespace Doser.Implementation.Lifetime
 {
     internal class SingletonLifetime : IObjectResolver
     {
@@ -12,9 +14,9 @@
 
         public InstanceLifetime Lifetime => InstanceLifetime.Global;
 
-        public object Get()
+        public Func<object> GetResolver()
         {
-            return this.value ??= objectResolver.Get();
+            return () => this.value ??= objectResolver.GetResolver()();
         }
 
         public void Build()

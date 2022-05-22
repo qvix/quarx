@@ -1,4 +1,5 @@
-﻿namespace Doser.Implementation
+﻿#nullable enable
+namespace Doser.Implementation
 {
     using System;
     using System.Collections.Concurrent;
@@ -6,35 +7,35 @@
     internal class ResolverRepository : IDoserServiceProvider
     {
         private readonly ConcurrentDictionary<Type, TypeResolver> typeResolvers = new ();
-
-        public bool TryGetValue(Type type, out TypeResolver result)
+        
+        public bool TryGetValue(Type type, out TypeResolver? result)
         {
             return this.typeResolvers.TryGetValue(type, out result);
         }
 
         public void Add(Type type, IObjectResolver resolver)
         {
-            this.Ensure(type).Add(resolver);
+            this.EnsureTypeResolver(type).Add(resolver);
         }
 
         public void Add(Type type, object key, IObjectResolver resolver)
         {
-            this.Ensure(type).Add(key, resolver);
+            this.EnsureTypeResolver(type).Add(key, resolver);
         }
 
         public object? GetService(Type serviceType, object key)
         {
-            return this.Ensure(serviceType).GetResolver(key).Get();
+            return this.EnsureTypeResolver(serviceType).GetResolver(key).GetResolver()();
         }
 
         public object? GetService(Type serviceType)
         {
-            return this.Ensure(serviceType).GetResolver().Get();
+            return this.EnsureTypeResolver(serviceType).GetResolver().GetResolver()(); ;
         }
 
         public TypeResolver GetResolver(Type serviceType)
         {
-            return this.Ensure(serviceType);
+            return this.EnsureTypeResolver(serviceType);
         }
 
         public IDoserServiceProvider Build()
@@ -47,14 +48,11 @@
             return this;
         }
 
-        private TypeResolver Ensure(Type type)
+        private TypeResolver EnsureTypeResolver(Type type)
         {
-            if (this.typeResolvers.TryGetValue(type, out var resolver))
-            {
-                return resolver;
-            }
-
-            return this.typeResolvers.GetOrAdd(type, _ => new TypeResolver(type, this));
+            return this.typeResolvers.TryGetValue(type, out var resolver) 
+                ? resolver 
+                : this.typeResolvers.GetOrAdd(type, _ => new TypeResolver(type, this));
         }
     }
 }

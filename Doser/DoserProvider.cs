@@ -9,14 +9,17 @@
         private readonly ResolverRepository registrations = new();
         private readonly IScopeService scopeService;
 
-        public DoserProvider()
+        public DoserProvider():this(new ThreadScopeService())
         {
-            this.scopeService = new ThreadScopeService();
         }
 
         public DoserProvider(IScopeService scopeService)
         {
             this.scopeService = scopeService;
+
+            this.Add<IScopeService, IScopeService>(() => scopeService, InstanceLifetime.Global);
+            this.Add<IServiceProvider, IServiceProvider>(() => this.registrations, InstanceLifetime.Global);
+            this.Add<IDoserServiceProvider, IDoserServiceProvider>(() => this.registrations, InstanceLifetime.Global);
         }
 
         public IDoserServiceProvider Build()
@@ -24,24 +27,28 @@
             return this.registrations.Build();
         }
 
-        public void Add(Type registeredType, Type implementationType, InstanceLifetime lifeTime)
+        public DoserProvider Add(Type registeredType, Type implementationType, InstanceLifetime lifeTime)
         {
             this.registrations.Add(registeredType, this.GetResolver(new ObjectBuilder(implementationType, registrations), lifeTime));
+            return this;
         }
 
-        public void Add(Type registeredType, Type implementationType, object key, InstanceLifetime lifeTime)
+        public DoserProvider Add(Type registeredType, Type implementationType, object key, InstanceLifetime lifeTime)
         {
             this.registrations.Add(registeredType, key, this.GetResolver(new ObjectBuilder(implementationType, registrations), lifeTime));
+            return this;
         }
 
-        public void Add<TInterface, TImplementation>(Func<TImplementation> factory, InstanceLifetime lifeTime) where TImplementation : TInterface
+        public DoserProvider Add<TInterface, TImplementation>(Func<TImplementation> factory, InstanceLifetime lifeTime) where TImplementation : TInterface
         {
             this.registrations.Add(typeof(TInterface), this.GetResolver(new InstanceFactory(() => factory(), lifeTime), lifeTime));
+            return this;
         }
 
-        public void Add<TInterface, TImplementation>(Func<TImplementation> factory, object key, InstanceLifetime lifeTime) where TImplementation : TInterface
+        public DoserProvider Add<TInterface, TImplementation>(Func<TImplementation> factory, object key, InstanceLifetime lifeTime) where TImplementation : TInterface
         {
             this.registrations.Add(typeof(TInterface), key, this.GetResolver(new InstanceFactory(() => factory(), lifeTime), lifeTime));
+            return this;
         }
 
         private IObjectResolver GetResolver(IObjectResolver resolver, InstanceLifetime scope)

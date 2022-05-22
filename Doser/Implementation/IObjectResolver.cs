@@ -1,10 +1,12 @@
-﻿namespace Doser.Implementation
+﻿using System;
+
+namespace Doser.Implementation
 {
     internal interface IObjectResolver
     {
         InstanceLifetime Lifetime { get;}
 
-        object Get();
+        Func<object> GetResolver();
 
         void Build();
     }

@@ -1,9 +1,10 @@
-﻿using System.Linq.Expressions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace DoserBenchmark;
 
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Reflection.Emit;
 
 using BenchmarkDotNet.Attributes;
 using Doser;
@@ -20,13 +21,14 @@ public class ActivatorBenchmark
     private DependencyB dependencyB;
     private DependencyC dependencyC;
     private IEnumerable<IData> data;
-    private Func<object> createFunction; 
+    private Func<object> createFunctionExpression;
+    private Func<object> createFunctionIl;
 
     [GlobalSetup]
     public void SetUp()
     {
         this.doserProvider = new DoserProvider()
-            .AddTransient<TypeToBeActivated>()
+            .AddTransient<Offstring>()
             .AddSingleton<DependencyA>()
             .AddSingleton<DependencyB>()
             .AddSingleton<IData, DependencyA>()
@@ -35,7 +37,7 @@ public class ActivatorBenchmark
             .Build();
 
         this.serviceProvider = new ServiceCollection()
-            .AddTransient<TypeToBeActivated>()
+            .AddTransient<Offstring>()
             .AddSingleton<DependencyA>()
             .AddSingleton<DependencyB>()
             .AddSingleton<IData, DependencyA>()
@@ -50,56 +52,82 @@ public class ActivatorBenchmark
 
         this.factoryArguments = new object[] { this.dependencyA, this.dependencyB, this.dependencyC, this.data };
 
-        this.createFunction = this.GetCreationFunction();
+        this.createFunctionExpression = this.GetExpressionCreationFunction();
+        this.createFunctionIl = this.GetIlCreationFunction();
+
+        this.doserProvider.GetService<DependencyA>();
+        this.doserProvider.GetService<DependencyB>();
     }
 
     [Benchmark]
     public void  DoserGetService()
     {
-        this.doserProvider.GetService<TypeToBeActivated>();
-    }
-
-    [Benchmark]
-    public void ExpressionCreate()
-    {
-        this.createFunction();
+        var offspring = this.doserProvider.GetService<Offstring>();
+        offspring.Foo();
     }
 
     [Benchmark]
     public void ServiceProviderGetService()
     {
-        ServiceProviderServiceExtensions.GetService<TypeToBeActivated>(this.serviceProvider);
+        var offspring = this.serviceProvider.GetService<Offstring>();
+        offspring.Foo();
+    }
+
+    [Benchmark]
+    public void ExpressionCreate()
+    {
+        this.createFunctionExpression();
+    }
+
+    [Benchmark]
+    public void IlCreate()
+    {
+        this.createFunctionIl();
     }
 
     [Benchmark]
     public void ActivatorCreateInstance()
     {
-        Activator.CreateInstance(typeof(TypeToBeActivated), factoryArguments);
+        var offspring = (Offstring)Activator.CreateInstance(typeof(Offstring), factoryArguments);
+        offspring.Foo();
     }
 
     [Benchmark]
     public void CreateInstance()
     {
-        var dependencyA = new DependencyA();
-        var dependencyB = new DependencyB();
-        var dependencyC = new DependencyC();
-        var data = new IData[] { dependencyA, dependencyB };
+        var a = new DependencyA();
+        var b = new DependencyB();
+        var c = new DependencyC();
+        var d = new IData[] { a, b };
 
-        new TypeToBeActivated(dependencyA, dependencyB, dependencyC, data);
+        var offspring = new Offstring(a, b, c, d);
+        offspring.Foo();
     }
 
     [Benchmark]
     public void CreateInstanceStatic()
     {
-        new TypeToBeActivated(this.dependencyA, this.dependencyB, this.dependencyC, this.data);
+        new Offstring(this.dependencyA, this.dependencyB, this.dependencyC, this.data);
     }
 
-
-    private Func<object> GetCreationFunction()
+    private Func<object> GetExpressionCreationFunction()
     {
         var constructor = typeof(DependencyA).GetConstructors()[0];
         
         return (Func<object>)Expression.Lambda(Expression.New(constructor)).Compile();
+    }
+
+    private Func<object> GetIlCreationFunction()
+    {
+        var method = new DynamicMethod(Guid.NewGuid().ToString("N"), typeof(object), Type.EmptyTypes, this.GetType(), true);
+        var generator = method.GetILGenerator();
+
+        var constructor = typeof(DependencyA).GetConstructors()[0];
+        
+        generator.Emit(OpCodes.Newobj, constructor);
+        generator.Emit(OpCodes.Ret);
+
+        return (Func<object>)method.CreateDelegate(typeof(Func<object>));
     }
 }
 

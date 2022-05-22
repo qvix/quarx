@@ -2,14 +2,11 @@
 {
     using System;
     using System.Linq.Expressions;
-    using System.Reflection;
 
     using Exceptions;
 
     internal static class FuncResolver
     {
-        private static readonly MethodInfo ResolverGetMethod = typeof(IObjectResolver).GetMethod(nameof(IObjectResolver.Get));
-
         public static IObjectResolver TryCreateFuncResolver(Type type,
             ResolverRepository typeResolvers, object key)
         {
@@ -43,17 +40,14 @@
                 throw new ResolveException(innerType);
             }
 
-            var enumerableCastFunc = CreateLambda(type, innerType, getResolver(targetResolver));
+            var innerResolver = CreateLambda(type, innerType, getResolver(targetResolver));
 
-            return new InstanceFactory(enumerableCastFunc, InstanceLifetime.Local);
+            return new InstanceFactory(innerResolver, InstanceLifetime.Local);
         }
 
         private static Func<object> CreateLambda(Type type, Type innerType, IObjectResolver resolver)
         {
-            // new Func<object>(() => new Func<RealType>(resolver.Invoke()));
-            var callExpression = Expression.Convert(Expression.Call(Expression.Constant(resolver), ResolverGetMethod), innerType);
-
-            var innerLambda = Expression.Lambda(type, callExpression);
+            var innerLambda = Expression.Lambda(type, resolver.CreateResolveExpression(innerType));
             return Expression.Lambda<Func<object>>(innerLambda).Compile();
         }
     }

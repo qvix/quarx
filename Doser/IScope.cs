@@ -4,8 +4,8 @@
 
     public interface IScope : IDisposable
     {
-        object Get(Guid key, Func<object> next);
+        object Get(Guid key, Func<object> factory);
 
-        object GetTransparent(Guid key, Func<object> next);
+        object GetTransparent(Guid key, Func<object> factory);
     }
 }

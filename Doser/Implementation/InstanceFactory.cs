@@ -14,9 +14,9 @@
 
         public InstanceLifetime Lifetime { get; } 
 
-        public object Get()
+        public Func<object> GetResolver()
         {
-            return instanceFactory();
+            return instanceFactory;
         }
 
         public void Build() { }

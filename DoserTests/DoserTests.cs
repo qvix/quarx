@@ -1,3 +1,5 @@
+using System.Collections;
+
 namespace DoserTests
 {
     using System;
@@ -203,6 +205,17 @@ namespace DoserTests
             Assert.AreEqual(2, result.Values.Length);
         }
 
+        [TestMethod]
+        public void ProviderShouldResolveList()
+        {
+            var provider = new DoserProvider()
+                .AddSingleton<ITest, Test>()
+                .AddSingleton<ITest, Test2>()
+                .Build();
+
+            var result = provider.GetService<Injected4>();
+            Assert.AreEqual(2, result.Values.Count);
+        }
         #region test classes
 
         private interface ITest
@@ -288,6 +301,15 @@ namespace DoserTests
             public ITest[] Values { get; }
         }
 
+        private class Injected4
+        {
+            public Injected4(IList<ITest> values)
+            {
+                this.Values = values;
+            }
+
+            public IList<ITest> Values { get; }
+        }
         #endregion
     }
 }

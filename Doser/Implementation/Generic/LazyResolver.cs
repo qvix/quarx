@@ -8,8 +8,6 @@
 
     internal static class LazyResolver
     {
-        private static readonly MethodInfo ResolverGetMethod = typeof(IObjectResolver).GetMethod(nameof(IObjectResolver.Get));
-
         public static IObjectResolver TryCreateLazyResolver(Type type,
             ResolverRepository typeResolvers, object key)
         {
@@ -50,7 +48,7 @@
 
         private static Func<object> CreateLambda(Type type, Type innerType, IObjectResolver resolver)
         {
-            var callExpression = Expression.Convert(Expression.Call(Expression.Constant(resolver), ResolverGetMethod), innerType);
+            var callExpression = resolver.CreateResolveExpression(innerType);
 
             var innerLambdaType = typeof(Func<>).MakeGenericType(innerType);
             var innerLambda = Expression.Lambda(innerLambdaType, callExpression);

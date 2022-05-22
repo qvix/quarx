@@ -1,15 +1,22 @@
 namespace DoserBenchmark.Entities;
 
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
-public class TypeToBeActivated
+public class Offstring
 {
-    public TypeToBeActivated(DependencyA a, DependencyB b, DependencyC c, IEnumerable<IData> data)
+    public Offstring(DependencyA a, DependencyB b, DependencyC c, IEnumerable<IData> data)
     {
         this.A = a;
         this.B = b;
         this.C = c;
         this.Data = data;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public void Foo()
+    {
+
     }
 
     public IEnumerable<IData> Data { get; }

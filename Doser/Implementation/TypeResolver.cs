@@ -1,16 +1,14 @@
-﻿using System.Linq;
-
-namespace Doser.Implementation
+﻿namespace Doser.Implementation
 {
     using System;
     using System.Collections.Generic;
-    
+    using System.Linq;
+
     using Generic;
     using Exceptions;
 
     internal class TypeResolver
     {
-        private readonly Type type;
         private readonly List<IObjectResolver> registered = new();
 
         private IDictionary<object, IObjectResolver> keyResolvers;
@@ -20,9 +18,11 @@ namespace Doser.Implementation
 
         public TypeResolver(Type type, ResolverRepository typeResolvers)
         {
-            this.type = type;
+            this.Type = type;
             this.typeResolvers = typeResolvers;
         }
+
+        public Type Type { get; }
 
         public void Add(IObjectResolver resolver)
         {
@@ -65,8 +65,9 @@ namespace Doser.Implementation
 
             if (!this.keyResolvers.TryGetValue(key, out var resolver))
             {
-                resolver = FuncResolver.TryCreateFuncResolver(this.type, this.typeResolvers, key)
-                           ?? LazyResolver.TryCreateLazyResolver(this.type, this.typeResolvers, key);
+                resolver = FuncResolver.TryCreateFuncResolver(this.Type, this.typeResolvers, key)
+                           ?? LazyResolver.TryCreateLazyResolver(this.Type, this.typeResolvers, key)
+                           ?? throw new ResolveException(this.Type, key); 
 
                 this.keyResolvers[key] = resolver;
             }
@@ -101,21 +102,21 @@ namespace Doser.Implementation
         {
             return this.registered.Count > 0
                 ? this.registered[0]
-                : EnumerableResolver.TryCreateEnumerableResolver(this.type, this.typeResolvers)
-                  ?? FuncResolver.TryCreateFuncResolver(this.type, this.typeResolvers)
-                  ?? LazyResolver.TryCreateLazyResolver(this.type, this.typeResolvers)
+                : EnumerableResolver.TryCreateEnumerableResolver(this.Type, this.typeResolvers)
+                  ?? FuncResolver.TryCreateFuncResolver(this.Type, this.typeResolvers)
+                  ?? LazyResolver.TryCreateLazyResolver(this.Type, this.typeResolvers)
                   ?? this.TryCreateTypeResolver()
-                  ?? throw new ResolveException(this.type);
+                  ?? throw new ResolveException(this.Type);
         }
 
         private IObjectResolver TryCreateTypeResolver()
         {
-            if (this.type.IsAbstract || this.type.IsInterface)
+            if (this.Type.IsAbstract || this.Type.IsInterface)
             {
                 return null;
             }
 
-            return new ObjectBuilder(this.type, this.typeResolvers);
+            return new ObjectBuilder(this.Type, this.typeResolvers);
         }
     }
 }

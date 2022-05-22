@@ -8,15 +8,17 @@ internal class Program
     {
         //Test();
         BenchmarkRunner.Run(typeof(ActivatorBenchmark));
-        //BenchmarkRunner.Run(typeof(ScopeValidationBenchmark));
+        BenchmarkRunner.Run(typeof(ScopeValidationBenchmark));
     }
 
     static void Test()
     {
         var benchmark = new ActivatorBenchmark();
-
+        
         benchmark.SetUp();
+
         benchmark.DoserGetService();
+        benchmark.ServiceProviderGetService();
         benchmark.DoserGetService();
     }
 }

@@ -9,23 +9,42 @@
     {
         private const int OperationsPerInvoke = 50000;
 
-        private IServiceProvider _transientSp;
-        private IServiceProvider _transientSpScopeValidation;
+        private IServiceProvider staticSp;
+        private IServiceProvider transientSp;
+        private IServiceProvider scopeSp;
+        private IScopeService scopeService;
 
         [GlobalSetup]
         public void Setup()
         {
-            var services = new DoserProvider();
-            services.AddTransient<A>();
-            services.AddTransient<B>();
-            services.AddTransient<C>();
-            _transientSp = services.Build();
+            this.staticSp = new DoserProvider()
+                .AddSingleton<A>()
+                .AddSingleton<B>()
+                .AddSingleton<C>()
+                .Build();
 
-            services = new DoserProvider();
-            services.AddTransient<A>();
-            services.AddTransient<B>();
-            services.AddTransient<C>();
-            _transientSpScopeValidation = services.Build();
+            this.transientSp =new DoserProvider()
+                .AddTransient<A>()
+                .AddTransient<B>()
+                .AddTransient<C>()
+                .Build();
+
+            this.scopeSp = new DoserProvider()
+                .AddScoped<A>()
+                .AddScoped<B>()
+                .AddScoped<C>()
+                .Build();
+            this.scopeService = this.scopeSp.GetService<IScopeService>();
+        }
+
+        [Benchmark(OperationsPerInvoke = OperationsPerInvoke)]
+        public void Singleton()
+        {
+            for (int i = 0; i < OperationsPerInvoke; i++)
+            {
+                var temp = staticSp.GetService<A>();
+                temp.Foo();
+            }
         }
 
         [Benchmark(Baseline = true, OperationsPerInvoke = OperationsPerInvoke)]
@@ -33,7 +52,7 @@
         {
             for (int i = 0; i < OperationsPerInvoke; i++)
             {
-                var temp = _transientSp.GetService<A>();
+                var temp = transientSp.GetService<A>();
                 temp.Foo();
             }
         }
@@ -41,10 +60,13 @@
         [Benchmark(OperationsPerInvoke = OperationsPerInvoke)]
         public void TransientWithScopeValidation()
         {
-            for (int i = 0; i < OperationsPerInvoke; i++)
+            using (this.scopeService.CreateScope())
             {
-                var temp = _transientSpScopeValidation.GetService<A>();
-                temp.Foo();
+                for (int i = 0; i < OperationsPerInvoke; i++)
+                {
+                    var temp = scopeSp.GetService<A>();
+                    temp.Foo();
+                }
             }
         }
 

@@ -10,9 +10,7 @@
     
     internal static class EnumerableResolver
     {
-        private static readonly MethodInfo ToArrayGeneric = typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray));
         private static readonly MethodInfo GetObjectsMethod = typeof(EnumerableResolver).GetMethod(nameof(GetObjects), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo CastMethod = typeof(Enumerable).GetMethod(nameof(Enumerable.Cast));
 
         public static IObjectResolver TryCreateEnumerableResolver(Type type, ResolverRepository typeResolvers)
         {
@@ -43,55 +41,52 @@
         private static Func<object> CreateLambda(Type targetType, Type type, IObjectResolver[] resolvers)
         {
             var enumerableGenericType = typeof(IEnumerable<>);
-            var enumerableTargetType = enumerableGenericType.MakeGenericType(type);
-            var castMethod = CastMethod.MakeGenericMethod(type);
-            var results = new object[resolvers.Length];
+            var enumerableSourceType = enumerableGenericType.MakeGenericType(type);
+            var results = Array.CreateInstance(type, resolvers.Length);
+            var getObjectsMethodTyped = GetObjectsMethod.MakeGenericMethod(type);
 
-            var callExpression = Expression.Convert(
-                Expression.Call(castMethod, Expression.Call(GetObjectsMethod, Expression.Constant(resolvers), Expression.Constant(results))),
-                enumerableTargetType);
+            var resolversFunc = resolvers.Select(x => x.GetResolver()).ToArray();
 
-            return Expression.Lambda<Func<object>>(GetTargetObject(targetType, type, callExpression, enumerableTargetType)).Compile();
+            var getObjectsExpression = Expression.Call(getObjectsMethodTyped, Expression.Constant(resolversFunc), Expression.Constant(results));
+
+            return Expression.Lambda<Func<object>>(GetTargetObject(targetType, type, getObjectsExpression, enumerableSourceType)).Compile();
         }
 
-        private static IEnumerable<object> GetObjects(IObjectResolver[] resolvers, object[] results)
+        private static T[] GetObjects<T>(Func<object>[] resolvers, T[] results)
         {
             for (int i = 0; i < resolvers.Length; i++)
             {
-                results[i] = resolvers[i].Get();
+                results[i] = (T)resolvers[i]();
             }
             return results;
         }
 
-        private static Expression GetTargetObject(Type targetType, Type innerType, Expression enumerableSource, Type enumerableTargetType)
+        private static Expression GetTargetObject(Type targetType, Type innerType, Expression getObjectsExpression, Type enumerableSourceType)
         {
-            if (targetType == enumerableTargetType)
+            if (targetType == enumerableSourceType)
             {
-                return enumerableSource;
+                return getObjectsExpression;
             }
 
             if (targetType.IsArray)
             {
-                var toArrayMethod = ToArrayGeneric.MakeGenericMethod(innerType);
-
-                return Expression.Call(toArrayMethod, enumerableSource);
+                return getObjectsExpression;
             }
 
             if (targetType.IsInterfaceImplementor(typeof(ICollection<>)))
             {
                 var genericList = typeof(List<>);
                 var targetList = genericList.MakeGenericType(innerType);
-                var listConstructor = targetList.GetConstructor(new[] { enumerableTargetType });
+                var listConstructor = targetList.GetConstructor(new[] { enumerableSourceType });
                 if (listConstructor == null)
                 {
                     throw new ResolveException($"Could not find constructor for List<{targetType.FullName}>");
                 }
 
-                return Expression.New(listConstructor, enumerableSource);
+                return Expression.New(listConstructor, getObjectsExpression);
             }
 
             throw new ResolveException($"Could not find constructor target type {targetType.FullName}");
         }
-
     }
 }
