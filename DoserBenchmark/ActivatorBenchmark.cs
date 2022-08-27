@@ -23,6 +23,7 @@ public class ActivatorBenchmark
     private IEnumerable<IData> data;
     private Func<object> createFunctionExpression;
     private Func<object> createFunctionIl;
+    private Func<object> createFunctionDoser;
 
     [GlobalSetup]
     public void SetUp()
@@ -54,13 +55,18 @@ public class ActivatorBenchmark
 
         this.createFunctionExpression = this.GetExpressionCreationFunction();
         this.createFunctionIl = this.GetIlCreationFunction();
-
-        this.doserProvider.GetService<DependencyA>();
-        this.doserProvider.GetService<DependencyB>();
+        this.createFunctionDoser = this.doserProvider.GetResolver<Offstring>();
     }
 
     [Benchmark]
-    public void  DoserGetService()
+    public void  DoserGetServiceDirect()
+    {
+        var offspring = (Offstring)this.createFunctionDoser();
+        offspring.Foo();
+    }
+
+    [Benchmark]
+    public void DoserGetService()
     {
         var offspring = this.doserProvider.GetService<Offstring>();
         offspring.Foo();

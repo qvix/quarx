@@ -1,10 +1,9 @@
-﻿namespace Doser
+﻿namespace Doser;
+
+public enum InstanceLifetime
 {
-    public enum InstanceLifetime
-    {
-        Global,
-        Scoped,
-        ScopeTransparent,
-        Local
-    }
+    Global,
+    Scoped,
+    ScopeTransparent,
+    Local
 }

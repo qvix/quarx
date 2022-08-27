@@ -1,9 +1,8 @@
-﻿namespace Doser
-{
-    public interface IScopeService
-    {
-        IScope Current { get; }
+﻿namespace Doser;
 
-        IScope CreateScope();
-    }
+public interface IScopeService
+{
+    IScope Current { get; }
+
+    IScope CreateScope();
 }

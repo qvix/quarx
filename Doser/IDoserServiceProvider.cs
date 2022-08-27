@@ -1,9 +1,10 @@
-﻿namespace Doser
-{
-    using System;
+﻿namespace Doser;
 
-    public interface IDoserServiceProvider : IServiceProvider
-    {
-        object? GetService(Type serviceType, object key);
-    }
+using System;
+
+public interface IDoserServiceProvider : IServiceProvider
+{
+    object? GetService(Type serviceType, object key);
+
+    Func<object> GetResolver<T>();
 }

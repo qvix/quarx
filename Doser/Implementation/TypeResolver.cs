@@ -1,122 +1,120 @@
-﻿namespace Doser.Implementation
+﻿namespace Doser.Implementation;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using Generic;
+using Exceptions;
+
+internal class TypeResolver
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
+    private readonly List<IObjectResolver> registered = new();
+    private IDictionary<object, IObjectResolver>? keyResolvers;
+    private readonly ResolverRepository repository;
+    private IObjectResolver? defaultResolver;
+    private IObjectResolver[]? defaultResolvers;
 
-    using Generic;
-    using Exceptions;
-
-    internal class TypeResolver
+    public TypeResolver(Type type, ResolverRepository repository)
     {
-        private readonly List<IObjectResolver> registered = new();
+        this.Type = type;
+        this.repository = repository;
+    }
 
-        private IDictionary<object, IObjectResolver> keyResolvers;
-        private readonly ResolverRepository typeResolvers;
-        private IObjectResolver defaultResolver;
-        private IObjectResolver[] defaultResolvers;
+    public Type Type { get; }
 
-        public TypeResolver(Type type, ResolverRepository typeResolvers)
-        {
-            this.Type = type;
-            this.typeResolvers = typeResolvers;
-        }
+    public void Add(IObjectResolver resolver)
+    {
+        this.registered.Add(resolver);
+    }
 
-        public Type Type { get; }
-
-        public void Add(IObjectResolver resolver)
-        {
-            this.registered.Add(resolver);
-        }
-
-        public void Add(object key, IObjectResolver resolver)
-        {
-            key.CheckNotNull();
-
-            this.keyResolvers ??= new Dictionary<object, IObjectResolver>();
+    public void Add(object key, IObjectResolver resolver)
+    {
+        this.keyResolvers ??= new Dictionary<object, IObjectResolver>();
             
-            this.keyResolvers.Add(key, resolver);
-        }
+        this.keyResolvers.Add(key, resolver);
+    }
 
-        public void Build()
+    public void Build()
+    {
+        this.defaultResolvers = this.GetResolversInternal().ToArray();
+
+        foreach (var resolver in this.defaultResolvers)
         {
-            this.defaultResolvers = this.GetResolversInternal().ToArray();
-
-            foreach (var resolver in this.defaultResolvers)
-            {
-                resolver.Build();
-            }
-
-            this.defaultResolver = this.defaultResolvers.First();
+            resolver.Build();
         }
 
-        public IObjectResolver GetResolver()
+        this.defaultResolver = this.registered.Count > 0 
+            ? this.registered.Last() 
+            : null;
+    }
+
+    public IObjectResolver GetResolver()
+    {
+        return this.defaultResolver ??= this.CreateResolver();
+    }
+
+    public IObjectResolver? GetResolver(object key)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        if (this.keyResolvers == null)
         {
-            return defaultResolver ??= this.CreateResolver();
+            return null;
         }
 
-        public IObjectResolver GetResolver(object key)
+        if (!this.keyResolvers.TryGetValue(key, out var resolver))
         {
-            key.CheckNotNull();
-            if (this.keyResolvers == null)
-            {
-                return null;
-            }
+            resolver = FuncResolver.TryCreateFuncResolver(this.Type, this.repository, key)
+                       ?? LazyResolver.TryCreateLazyResolver(this.Type, this.repository, key)
+                       ?? throw new ResolveException(this.Type, key); 
 
-            if (!this.keyResolvers.TryGetValue(key, out var resolver))
-            {
-                resolver = FuncResolver.TryCreateFuncResolver(this.Type, this.typeResolvers, key)
-                           ?? LazyResolver.TryCreateLazyResolver(this.Type, this.typeResolvers, key)
-                           ?? throw new ResolveException(this.Type, key); 
-
-                this.keyResolvers[key] = resolver;
-            }
-
-            return resolver;
+            this.keyResolvers[key] = resolver;
         }
 
-        public IObjectResolver[] GetResolvers()
+        return resolver;
+    }
+
+    public IObjectResolver[] GetResolvers()
+    {
+        return this.defaultResolvers!;
+    }
+
+    private IEnumerable<IObjectResolver> GetResolversInternal()
+    {
+        foreach (var resolver in this.registered)
         {
-            return this.defaultResolvers;
+            yield return resolver;
         }
 
-        private IEnumerable<IObjectResolver> GetResolversInternal()
+        if (this.keyResolvers == null)
         {
-            foreach (var resolver in this.registered)
-            {
-                yield return resolver;
-            }
-
-            if (this.keyResolvers == null)
-            {
-                yield break;
-            }
-
-            foreach (var resolver in this.keyResolvers)
-            {
-                yield return resolver.Value;
-            }
+            yield break;
         }
 
-        private IObjectResolver CreateResolver()
+        foreach (var resolver in this.keyResolvers)
         {
-            return this.registered.Count > 0
-                ? this.registered[0]
-                : EnumerableResolver.TryCreateEnumerableResolver(this.Type, this.typeResolvers)
-                  ?? FuncResolver.TryCreateFuncResolver(this.Type, this.typeResolvers)
-                  ?? LazyResolver.TryCreateLazyResolver(this.Type, this.typeResolvers)
-                  ?? this.TryCreateTypeResolver()
-                  ?? throw new ResolveException(this.Type);
+            yield return resolver.Value;
         }
+    }
 
-        private IObjectResolver TryCreateTypeResolver()
+    private IObjectResolver CreateResolver()
+    {
+        return this.registered.Count > 0
+            ? this.registered[0]
+            : EnumerableResolver.TryCreateEnumerableResolver(this.Type, this.repository)
+              ?? FuncResolver.TryCreateFuncResolver(this.Type, this.repository)
+              ?? LazyResolver.TryCreateLazyResolver(this.Type, this.repository)
+              ?? this.TryCreateTypeResolver()
+              ?? throw new ResolveException(this.Type);
+    }
+
+    private IObjectResolver? TryCreateTypeResolver()
+    {
+        if (this.Type.IsAbstract || this.Type.IsInterface)
         {
-            if (this.Type.IsAbstract || this.Type.IsInterface)
-            {
-                return null;
-            }
-
-            return new ObjectBuilder(this.Type, this.typeResolvers);
+            return null;
         }
+
+        return new ObjectBuilder(this.Type, this.repository);
     }
 }

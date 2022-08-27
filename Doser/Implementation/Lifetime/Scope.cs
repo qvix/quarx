@@ -1,36 +1,35 @@
-﻿namespace Doser.Implementation.Lifetime
+﻿namespace Doser.Implementation.Lifetime;
+
+using System;
+using System.Collections.Concurrent;
+
+internal class Scope : IScope
 {
-    using System;
-    using System.Collections.Concurrent;
+    private readonly ConcurrentDictionary<Guid, object> instances = new ();
+    private readonly ThreadScopeService service;
 
-    internal class Scope : IScope
+    public Scope(ThreadScopeService service, IScope parent)
     {
-        private readonly ConcurrentDictionary<Guid, object> instances = new ();
-        private readonly ThreadScopeService service;
+        this.service = service;
+        this.Parent = parent;
+    }
 
-        public Scope(ThreadScopeService service, IScope parent)
-        {
-            this.service = service;
-            this.Parent = parent;
-        }
+    public IScope Parent { get; }
 
-        public IScope Parent { get; }
+    public object Get(Guid key, Func<object> factory)
+    {
+        return this.instances.GetOrAdd(key, _ => factory());
+    }
 
-        public object Get(Guid key, Func<object> factory)
-        {
-            return this.instances.GetOrAdd(key, _ => factory());
-        }
+    public object GetTransparent(Guid key, Func<object> factory)
+    {
+        return this.Get(key, this.Parent == null 
+            ? factory 
+            : () => this.Parent.GetTransparent(key, factory));
+    }
 
-        public object GetTransparent(Guid key, Func<object> factory)
-        {
-            return this.Get(key, this.Parent == null 
-                ? factory 
-                : () => this.Parent.GetTransparent(key, factory));
-        }
-
-        public void Dispose()
-        {
-            this.service.CloseScope(this);
-        }
+    public void Dispose()
+    {
+        this.service.CloseScope(this);
     }
 }

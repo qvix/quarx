@@ -1,92 +1,91 @@
-﻿namespace Doser.Implementation.Generic
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Linq.Expressions;
-    using System.Reflection;
+﻿namespace Doser.Implementation.Generic;
 
-    using Exceptions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+
+using Exceptions;
     
-    internal static class EnumerableResolver
+internal static class EnumerableResolver
+{
+    private static readonly MethodInfo GetObjectsMethod = typeof(EnumerableResolver).GetMethod(nameof(GetObjects), BindingFlags.NonPublic | BindingFlags.Static);
+
+    public static IObjectResolver? TryCreateEnumerableResolver(Type type, ResolverRepository typeResolvers)
     {
-        private static readonly MethodInfo GetObjectsMethod = typeof(EnumerableResolver).GetMethod(nameof(GetObjects), BindingFlags.NonPublic | BindingFlags.Static);
-
-        public static IObjectResolver TryCreateEnumerableResolver(Type type, ResolverRepository typeResolvers)
+        if (!type.IsInterfaceImplementor(typeof(IEnumerable<>)))
         {
-            if (!type.IsInterfaceImplementor(typeof(IEnumerable<>)))
-            {
-                return null;
-            }
-
-            var innerType = type.IsArray && type.GetArrayRank() == 1
-                ? type.GetElementType()
-                : type.GetGenericArguments().FirstOrDefault();
-            if (innerType == null)
-            {
-                throw new ArgumentException($"Cannot create resolver for {type.FullName}");
-            }
-
-            if (!typeResolvers.TryGetValue(innerType, out var targetResolver))
-            {
-                throw new ResolveException(innerType);
-            }
-
-            targetResolver.Build();
-            var enumerableCastFunc = CreateLambda(type, innerType, targetResolver.GetResolvers());
-
-            return new InstanceFactory(enumerableCastFunc, InstanceLifetime.Local);
+            return null;
         }
 
-        private static Func<object> CreateLambda(Type targetType, Type type, IObjectResolver[] resolvers)
+        var innerType = type.IsArray && type.GetArrayRank() == 1
+            ? type.GetElementType()
+            : type.GetGenericArguments().FirstOrDefault();
+        if (innerType == null)
         {
-            var enumerableGenericType = typeof(IEnumerable<>);
-            var enumerableSourceType = enumerableGenericType.MakeGenericType(type);
-            var results = Array.CreateInstance(type, resolvers.Length);
-            var getObjectsMethodTyped = GetObjectsMethod.MakeGenericMethod(type);
-
-            var resolversFunc = resolvers.Select(x => x.GetResolver()).ToArray();
-
-            var getObjectsExpression = Expression.Call(getObjectsMethodTyped, Expression.Constant(resolversFunc), Expression.Constant(results));
-
-            return Expression.Lambda<Func<object>>(GetTargetObject(targetType, type, getObjectsExpression, enumerableSourceType)).Compile();
+            throw new ArgumentException($"Cannot create resolver for {type.FullName}");
         }
 
-        private static T[] GetObjects<T>(Func<object>[] resolvers, T[] results)
+        if (!typeResolvers.TryGetValue(innerType, out var targetResolver))
         {
-            for (int i = 0; i < resolvers.Length; i++)
-            {
-                results[i] = (T)resolvers[i]();
-            }
-            return results;
+            throw new ResolveException(innerType);
         }
 
-        private static Expression GetTargetObject(Type targetType, Type innerType, Expression getObjectsExpression, Type enumerableSourceType)
+        targetResolver.Build();
+        var enumerableCastFunc = CreateLambda(type, innerType, targetResolver.GetResolvers());
+
+        return new InstanceFactory(enumerableCastFunc, InstanceLifetime.Local);
+    }
+
+    private static Func<object> CreateLambda(Type targetType, Type type, IObjectResolver[] resolvers)
+    {
+        var enumerableGenericType = typeof(IEnumerable<>);
+        var enumerableSourceType = enumerableGenericType.MakeGenericType(type);
+        var results = Array.CreateInstance(type, resolvers.Length);
+        var getObjectsMethodTyped = GetObjectsMethod.MakeGenericMethod(type);
+
+        var resolversFunc = resolvers.Select(x => x.GetResolver()).ToArray();
+
+        var getObjectsExpression = Expression.Call(getObjectsMethodTyped, Expression.Constant(resolversFunc), Expression.Constant(results));
+
+        return Expression.Lambda<Func<object>>(GetTargetObject(targetType, type, getObjectsExpression, enumerableSourceType)).Compile();
+    }
+
+    private static T[] GetObjects<T>(Func<object>[] resolvers, T[] results)
+    {
+        for (int i = 0; i < resolvers.Length; i++)
         {
-            if (targetType == enumerableSourceType)
-            {
-                return getObjectsExpression;
-            }
-
-            if (targetType.IsArray)
-            {
-                return getObjectsExpression;
-            }
-
-            if (targetType.IsInterfaceImplementor(typeof(ICollection<>)))
-            {
-                var genericList = typeof(List<>);
-                var targetList = genericList.MakeGenericType(innerType);
-                var listConstructor = targetList.GetConstructor(new[] { enumerableSourceType });
-                if (listConstructor == null)
-                {
-                    throw new ResolveException($"Could not find constructor for List<{targetType.FullName}>");
-                }
-
-                return Expression.New(listConstructor, getObjectsExpression);
-            }
-
-            throw new ResolveException($"Could not find constructor target type {targetType.FullName}");
+            results[i] = (T)resolvers[i]();
         }
+        return results;
+    }
+
+    private static Expression GetTargetObject(Type targetType, Type innerType, Expression getObjectsExpression, Type enumerableSourceType)
+    {
+        if (targetType == enumerableSourceType)
+        {
+            return getObjectsExpression;
+        }
+
+        if (targetType.IsArray)
+        {
+            return getObjectsExpression;
+        }
+
+        if (targetType.IsInterfaceImplementor(typeof(ICollection<>)))
+        {
+            var genericList = typeof(List<>);
+            var targetList = genericList.MakeGenericType(innerType);
+            var listConstructor = targetList.GetConstructor(new[] { enumerableSourceType });
+            if (listConstructor == null)
+            {
+                throw new ResolveException($"Could not find constructor for List<{targetType.FullName}>");
+            }
+
+            return Expression.New(listConstructor, getObjectsExpression);
+        }
+
+        throw new ResolveException($"Could not find constructor target type {targetType.FullName}");
     }
 }
