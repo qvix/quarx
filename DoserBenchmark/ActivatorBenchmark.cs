@@ -58,7 +58,7 @@ public class ActivatorBenchmark
         this.createFunctionDoser = this.doserProvider.GetResolver<Offstring>();
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void  DoserGetServiceDirect()
     {
         var offspring = (Offstring)this.createFunctionDoser();
@@ -70,6 +70,12 @@ public class ActivatorBenchmark
     {
         var offspring = this.doserProvider.GetService<Offstring>();
         offspring.Foo();
+    }
+
+    //[Benchmark]
+    public void DoserGetResolver()
+    {
+        this.doserProvider.GetResolver<Offstring>();
     }
 
     [Benchmark]

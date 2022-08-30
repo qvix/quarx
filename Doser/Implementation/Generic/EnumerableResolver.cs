@@ -10,7 +10,7 @@ using Exceptions;
     
 internal static class EnumerableResolver
 {
-    private static readonly MethodInfo GetObjectsMethod = typeof(EnumerableResolver).GetMethod(nameof(GetObjects), BindingFlags.NonPublic | BindingFlags.Static);
+    private static readonly MethodInfo getObjectsMethod = typeof(EnumerableResolver).GetMethod(nameof(GetObjects), BindingFlags.NonPublic | BindingFlags.Static)!;
 
     public static IObjectResolver? TryCreateEnumerableResolver(Type type, ResolverRepository typeResolvers)
     {
@@ -32,7 +32,7 @@ internal static class EnumerableResolver
             throw new ResolveException(innerType);
         }
 
-        targetResolver.Build();
+        targetResolver!.Build();
         var enumerableCastFunc = CreateLambda(type, innerType, targetResolver.GetResolvers());
 
         return new InstanceFactory(enumerableCastFunc, InstanceLifetime.Local);
@@ -43,20 +43,18 @@ internal static class EnumerableResolver
         var enumerableGenericType = typeof(IEnumerable<>);
         var enumerableSourceType = enumerableGenericType.MakeGenericType(type);
         var results = Array.CreateInstance(type, resolvers.Length);
-        var getObjectsMethodTyped = GetObjectsMethod.MakeGenericMethod(type);
+        var getObjectsMethodTyped = getObjectsMethod.MakeGenericMethod(type);
 
-        var resolversFunc = resolvers.Select(x => x.GetResolver()).ToArray();
-
-        var getObjectsExpression = Expression.Call(getObjectsMethodTyped, Expression.Constant(resolversFunc), Expression.Constant(results));
+        var getObjectsExpression = Expression.Call(getObjectsMethodTyped, Expression.Constant(resolvers), Expression.Constant(results));
 
         return Expression.Lambda<Func<object>>(GetTargetObject(targetType, type, getObjectsExpression, enumerableSourceType)).Compile();
     }
 
-    private static T[] GetObjects<T>(Func<object>[] resolvers, T[] results)
+    private static T[] GetObjects<T>(IObjectResolver[] resolvers, T[] results)
     {
         for (int i = 0; i < resolvers.Length; i++)
         {
-            results[i] = (T)resolvers[i]();
+            results[i] = (T)resolvers[i].Resolve()!;
         }
         return results;
     }

@@ -24,17 +24,17 @@ internal class ResolverRepository : IDoserServiceProvider
 
     public object? GetService(Type serviceType)
     {
-        return this.EnsureTypeResolver(serviceType).GetResolver().GetResolver()();
+        return this.EnsureTypeResolver(serviceType).GetResolver().Resolve();
     }
 
     public object? GetService(Type serviceType, object key)
     {
-        return this.EnsureTypeResolver(serviceType).GetResolver(key)?.GetResolver()();
+        return this.EnsureTypeResolver(serviceType).GetResolver(key)?.Resolve();
     }
 
     public Func<object> GetResolver<T>()
     {
-        return this.EnsureTypeResolver(typeof(T)).GetResolver().GetResolver();
+        return this.EnsureTypeResolver(typeof(T)).GetResolver().Resolve!;
     }
 
     public TypeResolver GetResolver(Type serviceType)

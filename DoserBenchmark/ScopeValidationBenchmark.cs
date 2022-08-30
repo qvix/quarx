@@ -5,6 +5,7 @@
     using BenchmarkDotNet.Attributes;
     using Doser;
 
+    [MemoryDiagnoser]
     public class ScopeValidationBenchmark
     {
         private const int OperationsPerInvoke = 50000;

@@ -16,9 +16,9 @@ internal class ScopeTransparentLifetime : IObjectResolver
 
     public InstanceLifetime Lifetime => InstanceLifetime.ScopeTransparent;
 
-    public Func<object> GetResolver()
+    public object? Resolve()
     {
-        return () => this.scopeService.Current?.GetTransparent(key, this.objectResolver.GetResolver());
+        return this.scopeService.Current?.GetTransparent(key, this.objectResolver.Resolve);
     }
 
     public void Build()

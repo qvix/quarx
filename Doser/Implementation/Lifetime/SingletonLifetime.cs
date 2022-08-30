@@ -1,11 +1,9 @@
-﻿using System;
-
-namespace Doser.Implementation.Lifetime;
+﻿namespace Doser.Implementation.Lifetime;
 
 internal class SingletonLifetime : IObjectResolver
 {
     private readonly IObjectResolver objectResolver;
-    private object value;
+    private object? value;
 
     public SingletonLifetime(IObjectResolver objectResolver)
     {
@@ -14,9 +12,9 @@ internal class SingletonLifetime : IObjectResolver
 
     public InstanceLifetime Lifetime => InstanceLifetime.Global;
 
-    public Func<object> GetResolver()
+    public object? Resolve()
     {
-        return () => this.value ??= objectResolver.GetResolver()();
+        return this.value ??= objectResolver.Resolve();
     }
 
     public void Build()

@@ -14,9 +14,9 @@ internal class InstanceFactory : IObjectResolver
 
     public InstanceLifetime Lifetime { get; } 
 
-    public Func<object> GetResolver()
+    public object Resolve()
     {
-        return instanceFactory;
+        return instanceFactory();
     }
 
     public void Build() { }

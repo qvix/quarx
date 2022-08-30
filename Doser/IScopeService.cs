@@ -2,7 +2,7 @@
 
 public interface IScopeService
 {
-    IScope Current { get; }
+    IScope? Current { get; }
 
     IScope CreateScope();
 }

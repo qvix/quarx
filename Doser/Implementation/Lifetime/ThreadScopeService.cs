@@ -1,12 +1,12 @@
-﻿using System.Threading;
+﻿namespace Doser.Implementation.Lifetime;
 
-namespace Doser.Implementation.Lifetime;
+using System.Threading;
 
 public class ThreadScopeService : IScopeService
 {
-    private readonly AsyncLocal<IScope> current = new ();
+    private readonly AsyncLocal<IScope?> current = new ();
 
-    public IScope Current { get => current.Value; private set => current.Value = value; }
+    public IScope? Current { get => current.Value; private set => current.Value = value; }
 
     public IScope CreateScope()
     {

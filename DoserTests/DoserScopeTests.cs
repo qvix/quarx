@@ -15,7 +15,7 @@ namespace DoserTests
                 .AddScoped<ITest, Test>()
                 .Build();
 
-            using (doser.GetService<IScopeService>().CreateScope())
+            using (doser.CreateScope())
             {
                 var first = doser.GetService<ITest>();
                 Assert.IsNotNull(first);
@@ -32,12 +32,12 @@ namespace DoserTests
                 .AddScoped<ITest, Test>()
                 .Build();
 
-            using (doser.GetService<IScopeService>().CreateScope())
+            using (doser.CreateScope())
             {
                 var first = doser.GetService<ITest>();
                 Assert.IsNotNull(first);
 
-                using (doser.GetService<IScopeService>().CreateScope())
+                using (doser.GetService<IScopeService>()!.CreateScope())
                 {
                     var second = doser.GetService<ITest>();
                     Assert.IsNotNull(second);
@@ -60,11 +60,11 @@ namespace DoserTests
                 .AddScopeTransparent<ITest, Test>()
                 .Build();
 
-            using (doser.GetService<IScopeService>().CreateScope())
+            using (doser.CreateScope())
             {
                 var first = doser.GetService<ITest>();
                 Assert.IsNotNull(first);
-                using (doser.GetService<IScopeService>().CreateScope())
+                using (doser.CreateScope())
                 {
                     var second = doser.GetService<ITest>();
                     Assert.IsNotNull(second);

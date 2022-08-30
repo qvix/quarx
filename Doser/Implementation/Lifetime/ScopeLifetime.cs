@@ -16,9 +16,9 @@ internal class ScopeLifetime: IObjectResolver
 
     public InstanceLifetime Lifetime => InstanceLifetime.Scoped;
 
-    public Func<object> GetResolver()
+    public object? Resolve()
     {
-        return () => this.scopeService.Current?.Get(key, this.objectResolver.GetResolver());
+        return this.scopeService.Current?.Get(key, () => this.objectResolver.Resolve());
     }
 
     public void Build()

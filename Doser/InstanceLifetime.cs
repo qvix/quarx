@@ -3,7 +3,7 @@
 public enum InstanceLifetime
 {
     Global,
-    Scoped,
     ScopeTransparent,
+    Scoped,
     Local
 }
