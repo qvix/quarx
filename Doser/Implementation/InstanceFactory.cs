@@ -19,5 +19,5 @@ internal class InstanceFactory : IObjectResolver
         return instanceFactory();
     }
 
-    public void Build() { }
+    public IObjectResolver Build() => this;
 }

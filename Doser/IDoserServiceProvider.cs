@@ -6,5 +6,5 @@ public interface IDoserServiceProvider : IServiceProvider
 {
     object? GetService(Type serviceType, object key);
 
-    Func<object> GetResolver<T>();
+    Func<object?> GetResolver<T>();
 }

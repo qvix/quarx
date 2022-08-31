@@ -8,7 +8,7 @@ internal class Program
     {
         //Test();
         BenchmarkRunner.Run(typeof(ActivatorBenchmark));
-        BenchmarkRunner.Run(typeof(ScopeValidationBenchmark));
+        //BenchmarkRunner.Run(typeof(ScopeValidationBenchmark));
     }
 
     static void Test()

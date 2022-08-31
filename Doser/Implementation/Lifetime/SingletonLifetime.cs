@@ -14,11 +14,13 @@ internal class SingletonLifetime : IObjectResolver
 
     public object? Resolve()
     {
-        return this.value ??= objectResolver.Resolve();
+        return this.value ??= this.objectResolver.Resolve();
     }
 
-    public void Build()
+    public IObjectResolver Build()
     {
         this.objectResolver.Build();
+        this.value ??= this.objectResolver.Resolve();
+        return this;
     }
 }

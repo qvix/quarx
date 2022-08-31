@@ -23,7 +23,6 @@ public class ActivatorBenchmark
     private IEnumerable<IData> data;
     private Func<object> createFunctionExpression;
     private Func<object> createFunctionIl;
-    private Func<object> createFunctionDoser;
 
     [GlobalSetup]
     public void SetUp()
@@ -55,27 +54,14 @@ public class ActivatorBenchmark
 
         this.createFunctionExpression = this.GetExpressionCreationFunction();
         this.createFunctionIl = this.GetIlCreationFunction();
-        this.createFunctionDoser = this.doserProvider.GetResolver<Offstring>();
     }
 
-    //[Benchmark]
-    public void  DoserGetServiceDirect()
-    {
-        var offspring = (Offstring)this.createFunctionDoser();
-        offspring.Foo();
-    }
 
     [Benchmark]
     public void DoserGetService()
     {
         var offspring = this.doserProvider.GetService<Offstring>();
         offspring.Foo();
-    }
-
-    //[Benchmark]
-    public void DoserGetResolver()
-    {
-        this.doserProvider.GetResolver<Offstring>();
     }
 
     [Benchmark]
@@ -96,7 +82,6 @@ public class ActivatorBenchmark
     {
         this.createFunctionIl();
     }
-
     [Benchmark]
     public void ActivatorCreateInstance()
     {
@@ -119,15 +104,25 @@ public class ActivatorBenchmark
     [Benchmark]
     public void CreateInstanceStatic()
     {
-        new Offstring(this.dependencyA, this.dependencyB, this.dependencyC, this.data);
+        var offspring = new Offstring(this.dependencyA, this.dependencyB, this.dependencyC, this.data);
+        offspring.Foo();
     }
-
+    
     private Func<object> GetExpressionCreationFunction()
     {
-        var constructor = typeof(DependencyA).GetConstructors()[0];
-        
-        return (Func<object>)Expression.Lambda(Expression.New(constructor)).Compile();
+        var constructor = typeof(Offstring).GetConstructors()[0];
+
+        var parameters = new Expression[]
+        {
+            Expression.Constant(this.dependencyA),
+            Expression.Constant(this.dependencyB),
+            Expression.Constant(this.dependencyC), 
+            Expression.Constant(this.data)
+        };
+
+        return (Func<object>)Expression.Lambda(Expression.New(constructor, parameters)).Compile();
     }
+    
 
     private Func<object> GetIlCreationFunction()
     {

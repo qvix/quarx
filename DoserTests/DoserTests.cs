@@ -137,11 +137,73 @@ namespace DoserTests
         }
 
         [TestMethod]
-        public void ProviderShouldResolveEnumerable()
+        public void ProviderShouldResolveEnumerableWithSingleton()
         {
             var provider = new DoserProvider()
                 .AddSingleton<ITest, Test>()
                 .AddSingleton<ITest, Test2>("duo")
+                .Build();
+
+            var result = provider.GetService<IEnumerable<ITest>>();
+
+            Assert.IsNotNull(result);
+            var list = result.ToList();
+            Assert.AreEqual(2, list.Count());
+            Assert.AreEqual(typeof(Test), list.First().GetType());
+            Assert.AreEqual(typeof(Test2), list.Skip(1).First().GetType());
+
+            var resultArray = provider.GetService<ITest[]>();
+
+            Assert.IsNotNull(resultArray);
+            Assert.AreEqual(2, resultArray.Count());
+            Assert.AreEqual(typeof(Test), resultArray.First().GetType());
+            Assert.AreEqual(typeof(Test2), resultArray.Skip(1).First().GetType());
+
+            var resultList = provider.GetService<IList<ITest>>();
+
+            Assert.IsNotNull(resultList);
+            Assert.AreEqual(2, resultList.Count());
+            Assert.AreEqual(typeof(Test), resultList.First().GetType());
+            Assert.AreEqual(typeof(Test2), resultList.Skip(1).First().GetType());
+        }
+
+        [TestMethod]
+        public void ProviderShouldResolveEnumerableWithTransient()
+        {
+            var provider = new DoserProvider()
+                .AddTransient<ITest, Test>()
+                .AddTransient<ITest, Test2>("duo")
+                .Build();
+
+            var result = provider.GetService<IEnumerable<ITest>>();
+
+            Assert.IsNotNull(result);
+            var list = result.ToList();
+            Assert.AreEqual(2, list.Count());
+            Assert.AreEqual(typeof(Test), list.First().GetType());
+            Assert.AreEqual(typeof(Test2), list.Skip(1).First().GetType());
+
+            var resultArray = provider.GetService<ITest[]>();
+
+            Assert.IsNotNull(resultArray);
+            Assert.AreEqual(2, resultArray.Count());
+            Assert.AreEqual(typeof(Test), resultArray.First().GetType());
+            Assert.AreEqual(typeof(Test2), resultArray.Skip(1).First().GetType());
+
+            var resultList = provider.GetService<IList<ITest>>();
+
+            Assert.IsNotNull(resultList);
+            Assert.AreEqual(2, resultList.Count());
+            Assert.AreEqual(typeof(Test), resultList.First().GetType());
+            Assert.AreEqual(typeof(Test2), resultList.Skip(1).First().GetType());
+        }
+
+        [TestMethod]
+        public void ProviderShouldResolveEnumerableMixed()
+        {
+            var provider = new DoserProvider()
+                .AddSingleton<ITest, Test>()
+                .AddTransient<ITest, Test2>("duo")
                 .Build();
 
             var result = provider.GetService<IEnumerable<ITest>>();

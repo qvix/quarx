@@ -39,7 +39,7 @@ internal static class LazyResolver
         {
             throw new ResolveException(innerType);
         }
-
+        targetResolver!.Build();
         var enumerableCastFunc = CreateLambda(type, innerType, getResolver(targetResolver));
 
         return new InstanceFactory(enumerableCastFunc, InstanceLifetime.Local);

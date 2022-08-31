@@ -21,8 +21,9 @@ internal class ScopeLifetime: IObjectResolver
         return this.scopeService.Current?.Get(key, () => this.objectResolver.Resolve());
     }
 
-    public void Build()
+    public IObjectResolver Build()
     {
         this.objectResolver.Build();
+        return this;
     }
 }

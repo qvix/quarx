@@ -39,7 +39,7 @@ internal static class FuncResolver
         {
             throw new ResolveException(innerType);
         }
-
+        targetResolver!.Build();
         var innerResolver = CreateLambda(type, innerType, getResolver(targetResolver!));
 
         return new InstanceFactory(innerResolver, InstanceLifetime.Local);

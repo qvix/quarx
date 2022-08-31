@@ -6,5 +6,5 @@ internal interface IObjectResolver
 
     object? Resolve();
 
-    void Build();
+    IObjectResolver Build();
 }

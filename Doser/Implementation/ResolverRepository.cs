@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 internal class ResolverRepository : IDoserServiceProvider
 {
     private readonly ConcurrentDictionary<Type, TypeResolver> typeResolvers = new ();
-        
+
     public bool TryGetValue(Type type, out TypeResolver? result)
     {
         return this.typeResolvers.TryGetValue(type, out result);
@@ -24,17 +24,17 @@ internal class ResolverRepository : IDoserServiceProvider
 
     public object? GetService(Type serviceType)
     {
-        return this.EnsureTypeResolver(serviceType).GetResolver().Resolve();
+        return this.GetRequiredResolver(serviceType).GetResolver().Resolve();
     }
 
     public object? GetService(Type serviceType, object key)
     {
-        return this.EnsureTypeResolver(serviceType).GetResolver(key)?.Resolve();
+        return this.GetRequiredResolver(serviceType).GetResolver(key)?.Resolve();
     }
 
-    public Func<object> GetResolver<T>()
+    public Func<object?> GetResolver<T>()
     {
-        return this.EnsureTypeResolver(typeof(T)).GetResolver().Resolve!;
+        return this.GetRequiredResolver(typeof(T)).GetResolver;
     }
 
     public TypeResolver GetResolver(Type serviceType)
@@ -44,9 +44,9 @@ internal class ResolverRepository : IDoserServiceProvider
 
     public IDoserServiceProvider Build()
     {
-        foreach (var resolver in this.typeResolvers.Values)
+        foreach (var typeResolver in this.typeResolvers.Values)
         {
-            resolver.Build();
+            typeResolver.Build();
         }
 
         return this;
@@ -56,6 +56,23 @@ internal class ResolverRepository : IDoserServiceProvider
     {
         return this.typeResolvers.TryGetValue(type, out var resolver) 
             ? resolver 
-            : this.typeResolvers.GetOrAdd(type, _ => new TypeResolver(type, this));
+            : this.typeResolvers.GetOrAdd(type, this.Create);
+    }
+
+    private TypeResolver GetRequiredResolver(Type type)
+    {
+        return this.typeResolvers.TryGetValue(type, out var resolver)
+            ? resolver
+            : this.typeResolvers.GetOrAdd(type, this.CreateAndBuild);
+    }
+
+    private TypeResolver Create(Type type)
+    {
+        return TypeResolver.Create(type, this);
+    }
+    
+    private TypeResolver CreateAndBuild(Type type)
+    {
+        return TypeResolver.CreateAndBuild(type, this);
     }
 }
