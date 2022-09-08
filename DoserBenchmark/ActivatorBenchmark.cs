@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DoserBenchmark;
 
@@ -80,8 +81,9 @@ public class ActivatorBenchmark
     [Benchmark]
     public void IlCreate()
     {
-        this.createFunctionIl();
+        //this.createFunctionIl();
     }
+    
     [Benchmark]
     public void ActivatorCreateInstance()
     {
@@ -129,7 +131,19 @@ public class ActivatorBenchmark
         var method = new DynamicMethod(Guid.NewGuid().ToString("N"), typeof(object), Type.EmptyTypes, this.GetType(), true);
         var generator = method.GetILGenerator();
 
-        var constructor = typeof(DependencyA).GetConstructors()[0];
+        var constructor = typeof(Offstring).GetConstructors()[0];
+        
+        generator.Emit(OpCodes.Ldarg_0);
+        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(dependencyA), BindingFlags.NonPublic | BindingFlags.Instance));
+
+        generator.Emit(OpCodes.Ldarg_0);
+        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(dependencyB), BindingFlags.NonPublic | BindingFlags.Instance));
+
+        generator.Emit(OpCodes.Ldarg_0);
+        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(dependencyC), BindingFlags.NonPublic | BindingFlags.Instance));
+
+        generator.Emit(OpCodes.Ldarg_0);
+        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(data), BindingFlags.NonPublic | BindingFlags.Instance));
         
         generator.Emit(OpCodes.Newobj, constructor);
         generator.Emit(OpCodes.Ret);

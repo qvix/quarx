@@ -2,13 +2,12 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs/Doser
+/.vs/*
 /Doser/bin
 /Doser/obj
-/DoserBenchmark/bin/Release
-/DoserBenchmark/obj
+/DoserBenchmark/bin/*
+/DoserBenchmark/obj/*
 /DoserTests/bin
 /DoserTests/obj
 *.csproj.vspscc
 *.user
-/DoserBenchmark/bin/Debug/net6.0

@@ -1,14 +1,16 @@
 ﻿namespace Doser.Implementation.Lifetime;
 
-using System.Collections.Generic;
-using System.Threading;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 internal class Scope : IScope
 {
     private readonly Dictionary<Guid, object> instances = new ();
     private readonly ThreadScopeService service;
     private readonly ReaderWriterLockSlim lockObject = new(LockRecursionPolicy.SupportsRecursion);
+    private bool isDisposed;
 
     public Scope(ThreadScopeService service, IScope? parent)
     {
@@ -61,6 +63,20 @@ internal class Scope : IScope
 
     public void Dispose()
     {
+        if (this.isDisposed)
+        {
+            return;
+        }
+
+        this.isDisposed = true;
         this.service.CloseScope(this);
+
+        foreach (var disposable in this.instances
+                     .Select(x => x.Value)
+                     .OfType<IDisposable>())
+        {
+            disposable.Dispose();
+        }
+        
     }
 }
