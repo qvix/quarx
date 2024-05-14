@@ -7,7 +7,7 @@ using System.Reflection;
 
 using Exceptions;
 
-internal class ObjectBuilder : IObjectResolver
+internal sealed class ObjectBuilder : IObjectResolver
 {
     private readonly Type targetType;
     private readonly ResolverRepository resolvers;
@@ -30,6 +30,35 @@ internal class ObjectBuilder : IObjectResolver
     {
         this.creationFunction ??= this.GetCreationFunction();
         return this;
+    }
+
+    public IObjectResolver[] GetParentResolvers()
+    {
+        var constructor = this.GetConstructorInfo();
+        return constructor.GetParameters()
+            .Select<ParameterInfo, IObjectResolver>(item =>
+            {
+                var parameterType = item.ParameterType;
+
+                var typeResolver = this.resolvers.GetResolver(parameterType);
+
+                typeResolver.Build();
+                var dependencyAttribute = Attribute.GetCustomAttribute(item, typeof(DependencyAttribute)) as DependencyAttribute;
+                var resolver = dependencyAttribute == null
+                    ? typeResolver.GetResolver()
+                    : typeResolver.GetResolver(dependencyAttribute.Key);
+
+                if (resolver != null)
+                {
+                    return resolver;
+                }
+
+                if (dependencyAttribute == null)
+                {
+                    throw new ResolveException(this.targetType);
+                }
+                throw new ResolveException(this.targetType, dependencyAttribute.Key);
+            }).ToArray();
     }
 
     private Func<object> GetCreationFunction()

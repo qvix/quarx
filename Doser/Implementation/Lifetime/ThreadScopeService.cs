@@ -2,7 +2,7 @@
 
 using System.Threading;
 
-public class ThreadScopeService : IScopeService
+internal sealed class ThreadScopeService : IScopeService
 {
     private readonly AsyncLocal<IScope?> current = new ();
 

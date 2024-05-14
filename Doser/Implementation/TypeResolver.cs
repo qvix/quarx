@@ -7,7 +7,7 @@ using System.Linq;
 using Generic;
 using Exceptions;
 
-internal class TypeResolver
+internal sealed class TypeResolver
 {
     private readonly List<IObjectResolver> registered = new();
     private IDictionary<object, IObjectResolver>? keyResolvers;

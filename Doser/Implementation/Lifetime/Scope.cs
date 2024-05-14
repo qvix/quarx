@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-internal class Scope : IScope
+internal sealed class Scope : IScope
 {
     private readonly Dictionary<Guid, object> instances = new ();
     private readonly ThreadScopeService service;

@@ -2,11 +2,11 @@
 
 using System;
     
-internal class ScopeTransparentLifetime : IObjectResolver
+internal sealed class ScopeTransparentLifetime : IObjectResolver
 {
     private readonly IScopeService scopeService;
     private readonly IObjectResolver objectResolver;
-    private readonly Guid key = Guid.NewGuid();
+    private readonly Guid key = Guid.NewGuid(); 
 
     public ScopeTransparentLifetime(IScopeService scopeService, IObjectResolver objectResolver)
     {

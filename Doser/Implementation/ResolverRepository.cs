@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 
-internal class ResolverRepository : IDoserServiceProvider
+internal sealed class ResolverRepository : IDoserServiceProvider
 {
     private readonly ConcurrentDictionary<Type, TypeResolver> typeResolvers = new ();
 

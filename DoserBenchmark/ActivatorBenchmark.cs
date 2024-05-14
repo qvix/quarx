@@ -22,14 +22,14 @@ public class ActivatorBenchmark
     private DependencyB dependencyB;
     private DependencyC dependencyC;
     private IEnumerable<IData> data;
-    private Func<object> createFunctionExpression;
+    private Func<Offspring> createFunctionExpression;
     private Func<object> createFunctionIl;
 
     [GlobalSetup]
     public void SetUp()
     {
         this.doserProvider = new DoserProvider()
-            .AddTransient<Offstring>()
+            .AddTransient<Offspring>()
             .AddSingleton<DependencyA>()
             .AddSingleton<DependencyB>()
             .AddSingleton<IData, DependencyA>()
@@ -38,7 +38,7 @@ public class ActivatorBenchmark
             .Build();
 
         this.serviceProvider = new ServiceCollection()
-            .AddTransient<Offstring>()
+            .AddTransient<Offspring>()
             .AddSingleton<DependencyA>()
             .AddSingleton<DependencyB>()
             .AddSingleton<IData, DependencyA>()
@@ -61,21 +61,22 @@ public class ActivatorBenchmark
     [Benchmark]
     public void DoserGetService()
     {
-        var offspring = this.doserProvider.GetService<Offstring>();
+        var offspring = this.doserProvider.GetService<Offspring>();
         offspring.Foo();
     }
 
     [Benchmark]
     public void ServiceProviderGetService()
     {
-        var offspring = this.serviceProvider.GetService<Offstring>();
+        var offspring = this.serviceProvider.GetService<Offspring>();
         offspring.Foo();
     }
 
     [Benchmark]
     public void ExpressionCreate()
     {
-        this.createFunctionExpression();
+        var offspring = this.createFunctionExpression();
+        offspring.Foo();
     }
 
     [Benchmark]
@@ -87,7 +88,7 @@ public class ActivatorBenchmark
     [Benchmark]
     public void ActivatorCreateInstance()
     {
-        var offspring = (Offstring)Activator.CreateInstance(typeof(Offstring), factoryArguments);
+        var offspring = (Offspring)Activator.CreateInstance(typeof(Offspring), factoryArguments);
         offspring.Foo();
     }
 
@@ -99,20 +100,20 @@ public class ActivatorBenchmark
         var c = new DependencyC();
         var d = new IData[] { a, b };
 
-        var offspring = new Offstring(a, b, c, d);
+        var offspring = new Offspring(a, b, c, d);
         offspring.Foo();
     }
 
     [Benchmark]
     public void CreateInstanceStatic()
     {
-        var offspring = new Offstring(this.dependencyA, this.dependencyB, this.dependencyC, this.data);
+        var offspring = new Offspring(this.dependencyA, this.dependencyB, this.dependencyC, this.data);
         offspring.Foo();
     }
     
-    private Func<object> GetExpressionCreationFunction()
+    private Func<Offspring> GetExpressionCreationFunction()
     {
-        var constructor = typeof(Offstring).GetConstructors()[0];
+        var constructor = typeof(Offspring).GetConstructors()[0];
 
         var parameters = new Expression[]
         {
@@ -122,7 +123,7 @@ public class ActivatorBenchmark
             Expression.Constant(this.data)
         };
 
-        return (Func<object>)Expression.Lambda(Expression.New(constructor, parameters)).Compile();
+        return (Func<Offspring>)Expression.Lambda(Expression.New(constructor, parameters)).Compile();
     }
     
 
@@ -131,19 +132,19 @@ public class ActivatorBenchmark
         var method = new DynamicMethod(Guid.NewGuid().ToString("N"), typeof(object), Type.EmptyTypes, this.GetType(), true);
         var generator = method.GetILGenerator();
 
-        var constructor = typeof(Offstring).GetConstructors()[0];
+        var constructor = typeof(Offspring).GetConstructors()[0];
         
         generator.Emit(OpCodes.Ldarg_0);
-        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(dependencyA), BindingFlags.NonPublic | BindingFlags.Instance));
+        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(dependencyA), BindingFlags.NonPublic | BindingFlags.Instance)!);
 
         generator.Emit(OpCodes.Ldarg_0);
-        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(dependencyB), BindingFlags.NonPublic | BindingFlags.Instance));
+        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(dependencyB), BindingFlags.NonPublic | BindingFlags.Instance)!);
 
         generator.Emit(OpCodes.Ldarg_0);
-        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(dependencyC), BindingFlags.NonPublic | BindingFlags.Instance));
+        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(dependencyC), BindingFlags.NonPublic | BindingFlags.Instance)!);
 
         generator.Emit(OpCodes.Ldarg_0);
-        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(data), BindingFlags.NonPublic | BindingFlags.Instance));
+        generator.Emit(OpCodes.Ldfld, typeof(ActivatorBenchmark).GetField(nameof(data), BindingFlags.NonPublic | BindingFlags.Instance)!);
         
         generator.Emit(OpCodes.Newobj, constructor);
         generator.Emit(OpCodes.Ret);

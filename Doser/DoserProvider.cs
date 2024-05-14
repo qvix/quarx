@@ -55,7 +55,7 @@ public sealed class DoserProvider
         ArgumentNullException.ThrowIfNull(factory);
         ArgumentNullException.ThrowIfNull(lifeTime);
 
-        this.registrations.Add(typeof(TInterface), this.GetResolver(new InstanceFactory(() => factory(), lifeTime), lifeTime));
+        this.registrations.Add(typeof(TInterface), this.GetResolver(new InstanceFactory(() => factory()!, lifeTime), lifeTime));
         return this;
     }
 
@@ -65,7 +65,7 @@ public sealed class DoserProvider
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(lifeTime);
 
-        this.registrations.Add(typeof(TInterface), key, this.GetResolver(new InstanceFactory(() => factory(), lifeTime), lifeTime));
+        this.registrations.Add(typeof(TInterface), key, this.GetResolver(new InstanceFactory(() => factory()!, lifeTime), lifeTime));
         return this;
     }
 

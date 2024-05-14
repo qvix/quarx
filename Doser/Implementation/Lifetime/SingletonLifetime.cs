@@ -1,6 +1,6 @@
 ﻿namespace Doser.Implementation.Lifetime;
 
-internal class SingletonLifetime : IObjectResolver
+internal sealed class SingletonLifetime : IObjectResolver
 {
     private readonly IObjectResolver objectResolver;
     private object? value;

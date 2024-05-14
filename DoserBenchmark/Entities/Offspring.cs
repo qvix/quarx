@@ -3,9 +3,9 @@ namespace DoserBenchmark.Entities;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-public class Offstring
+public class Offspring
 {
-    public Offstring(DependencyA a, DependencyB b, DependencyC c, IEnumerable<IData> data)
+    public Offspring(DependencyA a, DependencyB b, DependencyC c, IEnumerable<IData> data)
     {
         this.A = a;
         this.B = b;

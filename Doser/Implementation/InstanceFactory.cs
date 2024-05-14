@@ -2,7 +2,7 @@
 
 using System;
 
-internal class InstanceFactory : IObjectResolver
+internal sealed class InstanceFactory : IObjectResolver
 {
     private readonly Func<object> instanceFactory;
 

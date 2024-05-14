@@ -2,7 +2,7 @@
 
 using System;
     
-internal class ScopeLifetime: IObjectResolver
+internal sealed class ScopeLifetime: IObjectResolver
 {
     private readonly IScopeService scopeService;
     private readonly IObjectResolver objectResolver;
@@ -18,7 +18,7 @@ internal class ScopeLifetime: IObjectResolver
 
     public object? Resolve()
     {
-        return this.scopeService.Current?.Get(key, () => this.objectResolver.Resolve());
+        return this.scopeService.Current?.Get(key, this.objectResolver.Resolve);
     }
 
     public IObjectResolver Build()
